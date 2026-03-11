@@ -1,32 +1,13 @@
 import { useState } from 'react';
-import type { View } from './types';
-import STORY_NODES from './data/storyNodes';
 import LandingPage from './components/LandingPage';
-import FlowView from './components/FlowView';
+import MapView from './components/MapView';
 
 export default function App() {
-  const [currentView, setCurrentView] = useState<View>('landing');
-  const [currentNodeId, setCurrentNodeId] = useState('start');
-
-  const startExperience = () => {
-    setCurrentNodeId('start');
-    setCurrentView('flow');
-  };
-
-  const handleChoice = (nextNodeId: string) => {
-    setCurrentNodeId(nextNodeId);
-    window.scrollTo(0, 0);
-  };
+  const [currentView, setCurrentView] = useState<'landing' | 'map'>('landing');
 
   if (currentView === 'landing') {
-    return <LandingPage onStart={startExperience} />;
+    return <LandingPage onStart={() => setCurrentView('map')} />;
   }
 
-  return (
-    <FlowView
-      node={STORY_NODES[currentNodeId]}
-      onChoice={handleChoice}
-      onBackToHome={() => setCurrentView('landing')}
-    />
-  );
+  return <MapView onBackToLanding={() => setCurrentView('landing')} />;
 }

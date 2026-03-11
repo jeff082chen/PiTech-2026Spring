@@ -1,4 +1,4 @@
-import { ArrowRight } from 'lucide-react';
+import { Map } from 'lucide-react';
 
 interface Props {
   onStart: () => void;
@@ -18,11 +18,11 @@ export default function LandingPage({ onStart }: Props) {
             </span>
           </h1>
           <p className="text-neutral-400 text-lg md:text-xl max-w-2xl mx-auto">
-            This is a system that surveils under the guise of protection. We spend millions of dollars investigating poverty—what if we spent that money fixing it?
+            This is a system that surveils under the guise of protection. We spend millions investigating poverty—what if we spent that money fixing it?
           </p>
         </div>
 
-        {/* Data Cards Section */}
+        {/* Data Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="bg-neutral-800 p-6 rounded-xl border border-neutral-700 hover:border-red-500 transition-colors">
             <div className="text-5xl font-black text-white mb-2">23%</div>
@@ -30,11 +30,11 @@ export default function LandingPage({ onStart }: Props) {
           </div>
           <div className="bg-neutral-800 p-6 rounded-xl border border-neutral-700 hover:border-red-500 transition-colors">
             <div className="text-5xl font-black text-red-500 mb-2">41%</div>
-            <p className="text-neutral-400 text-sm">Black parents in family court cases (White parents make up only 6%)</p>
+            <p className="text-neutral-400 text-sm">Black parents in family court cases (White parents = 6%)</p>
           </div>
           <div className="bg-neutral-800 p-6 rounded-xl border border-neutral-700 hover:border-red-500 transition-colors">
             <div className="text-5xl font-black text-amber-500 mb-2">&gt;95%</div>
-            <p className="text-neutral-400 text-sm">Cases stemming from resource-deprived "neglect", not malicious abuse</p>
+            <p className="text-neutral-400 text-sm">Cases stemming from resource-deprived "neglect", not abuse</p>
           </div>
         </div>
 
@@ -43,8 +43,8 @@ export default function LandingPage({ onStart }: Props) {
             onClick={onStart}
             className="group relative inline-flex items-center justify-center px-8 py-4 text-lg font-bold text-white bg-red-600 rounded-full overflow-hidden transition-all hover:bg-red-700 focus:outline-none focus:ring-4 focus:ring-red-500/50"
           >
-            <span className="mr-2">Enter the System</span>
-            <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+            <span className="mr-2">Explore the System Map</span>
+            <Map className="w-5 h-5 group-hover:scale-110 transition-transform" />
           </button>
         </div>
 
