@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import {
   ArrowRight,
   ArrowLeft,
@@ -31,15 +31,28 @@ const BORDER_COLOR: Record<NodeCategory, string> = {
 
 export default function MapView({ onBackToLanding }: Props) {
   const [activeNodeId, setActiveNodeId] = useState<string | null>(null);
+  const [showOverlay, setShowOverlay] = useState(false);
   const [history, setHistory] = useState<string[]>([]);
   const [showFactModal, setShowFactModal] = useState(false);
   const [showHistoryDropdown, setShowHistoryDropdown] = useState(false);
   const [viewport, setViewport] = useState({ w: window.innerWidth, h: window.innerHeight });
+  const overlayTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     const handleResize = () => setViewport({ w: window.innerWidth, h: window.innerHeight });
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  // On mount: brief overview pause, then zoom, then overlay card
+  useEffect(() => {
+    const t1 = setTimeout(() => setActiveNodeId('start'), 300);
+    const t2 = setTimeout(() => setShowOverlay(true), 900);
+    return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+      if (overlayTimerRef.current) clearTimeout(overlayTimerRef.current);
+    };
   }, []);
 
   const incomingNodes = useMemo(() => {
@@ -65,13 +78,18 @@ export default function MapView({ onBackToLanding }: Props) {
     }
   }, [activeNodeId, viewport]);
 
+  const scheduleOverlay = () => {
+    if (overlayTimerRef.current) clearTimeout(overlayTimerRef.current);
+    setShowOverlay(false);
+    overlayTimerRef.current = setTimeout(() => setShowOverlay(true), 600);
+  };
+
   const handleNodeSelect = (nodeId: string) => {
-    if (activeNodeId) {
-      setHistory(prev => [...prev, activeNodeId]);
-    }
+    if (activeNodeId) setHistory(prev => [...prev, activeNodeId]);
     setActiveNodeId(nodeId);
     setShowFactModal(false);
     setShowHistoryDropdown(false);
+    scheduleOverlay();
   };
 
   const jumpToHistory = (index: number) => {
@@ -80,10 +98,12 @@ export default function MapView({ onBackToLanding }: Props) {
     setActiveNodeId(targetNodeId);
     setShowFactModal(false);
     setShowHistoryDropdown(false);
+    scheduleOverlay();
   };
 
   const closeToMap = () => {
     setActiveNodeId(null);
+    setShowOverlay(false);
     setShowFactModal(false);
     setShowHistoryDropdown(false);
   };
@@ -121,7 +141,7 @@ export default function MapView({ onBackToLanding }: Props) {
         {/* Node Cards */}
         {Object.values(STORY_NODES).map(node => {
           const isSelected = activeNodeId === node.id;
-          const isDimmed  = activeNodeId !== null && !isSelected;
+          const isDimmed  = showOverlay && !isSelected;
           const borderColor = BORDER_COLOR[node.category];
 
           return (
@@ -229,7 +249,7 @@ export default function MapView({ onBackToLanding }: Props) {
         className={`
           fixed inset-0 z-40 flex items-center justify-center p-4 md:p-8
           transition-all duration-700 ease-[cubic-bezier(0.25,1,0.5,1)]
-          ${activeNodeId
+          ${showOverlay
             ? 'opacity-100 visible bg-black/40 backdrop-blur-sm pointer-events-auto'
             : 'opacity-0 invisible pointer-events-none'
           }
