@@ -7,11 +7,9 @@ import {
   Clock,
   ChevronDown,
   X,
-  Info,
 } from 'lucide-react';
 import STORY_NODES, { EDGES } from '../data/storyNodes';
 import type { NodeCategory } from '../types';
-import FactModal from './FactModal';
 
 interface Props {
   onBackToLanding: () => void;
@@ -33,7 +31,6 @@ export default function MapView({ onBackToLanding }: Props) {
   const [activeNodeId, setActiveNodeId] = useState<string | null>(null);
   const [showOverlay, setShowOverlay] = useState(false);
   const [history, setHistory] = useState<string[]>([]);
-  const [showFactModal, setShowFactModal] = useState(false);
   const [showHistoryDropdown, setShowHistoryDropdown] = useState(false);
   const [viewport, setViewport] = useState({ w: window.innerWidth, h: window.innerHeight });
   const overlayTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -87,7 +84,6 @@ export default function MapView({ onBackToLanding }: Props) {
   const handleNodeSelect = (nodeId: string) => {
     if (activeNodeId) setHistory(prev => [...prev, activeNodeId]);
     setActiveNodeId(nodeId);
-    setShowFactModal(false);
     setShowHistoryDropdown(false);
     scheduleOverlay();
   };
@@ -96,7 +92,6 @@ export default function MapView({ onBackToLanding }: Props) {
     const targetNodeId = history[index];
     setHistory(prev => prev.slice(0, index));
     setActiveNodeId(targetNodeId);
-    setShowFactModal(false);
     setShowHistoryDropdown(false);
     scheduleOverlay();
   };
@@ -104,7 +99,6 @@ export default function MapView({ onBackToLanding }: Props) {
   const closeToMap = () => {
     setActiveNodeId(null);
     setShowOverlay(false);
-    setShowFactModal(false);
     setShowHistoryDropdown(false);
   };
 
@@ -296,19 +290,10 @@ export default function MapView({ onBackToLanding }: Props) {
                 <X className="w-5 h-5" />
               </button>
 
-              <div className="flex justify-between items-start mb-6">
+              <div className="flex items-start mb-6">
                 <div className="bg-neutral-50 p-3 rounded-2xl border border-neutral-100">
                   {activeNode.icon}
                 </div>
-                {activeNode.fact && (
-                  <button
-                    onClick={() => setShowFactModal(true)}
-                    className="flex items-center space-x-2 bg-neutral-900 text-white px-4 py-2 rounded-full text-sm font-bold hover:bg-neutral-800 transition-colors animate-pulse shadow-md mt-2 mr-10"
-                  >
-                    <Info className="w-4 h-4" />
-                    <span>System Reality</span>
-                  </button>
-                )}
               </div>
 
               <h2 className="text-3xl md:text-4xl font-extrabold text-neutral-900 mb-4">
@@ -358,10 +343,6 @@ export default function MapView({ onBackToLanding }: Props) {
         )}
       </div>
 
-      {/* ── FACT MODAL ── */}
-      {showFactModal && activeNode?.fact && (
-        <FactModal fact={activeNode.fact} onClose={() => setShowFactModal(false)} />
-      )}
     </div>
   );
 }
