@@ -9,23 +9,12 @@ import {
   X,
 } from 'lucide-react';
 import STORY_NODES, { EDGES } from '../data/storyNodes';
-import type { NodeCategory } from '../types';
+import { CANVAS_W, CANVAS_H, MOBILE_BREAKPOINT } from '../config/constants';
+import { BORDER_COLOR } from '../config/categoryStyles';
 
 interface Props {
   onBackToLanding: () => void;
 }
-
-const CANVAS_WIDTH = 6700;
-const CANVAS_HEIGHT = 4500;
-
-const BORDER_COLOR: Record<NodeCategory, string> = {
-  hotline:      'border-yellow-400',
-  cares:        'border-green-400',
-  warning:      'border-amber-400',
-  investigation:'border-red-400',
-  court:        'border-red-700',
-  neutral:      'border-neutral-300',
-};
 
 export default function MapView({ onBackToLanding }: Props) {
   const [activeNodeId, setActiveNodeId] = useState<string | null>(null);
@@ -60,11 +49,11 @@ export default function MapView({ onBackToLanding }: Props) {
   }, [activeNodeId]);
 
   const cameraTransform = useMemo(() => {
-    const isMobile = viewport.w < 768;
+    const isMobile = viewport.w < MOBILE_BREAKPOINT;
     if (!activeNodeId) {
-      const scale = Math.min(viewport.w / CANVAS_WIDTH, viewport.h / CANVAS_HEIGHT) * 0.9;
-      const tx = (viewport.w - CANVAS_WIDTH * scale) / 2;
-      const ty = (viewport.h - CANVAS_HEIGHT * scale) / 2;
+      const scale = Math.min(viewport.w / CANVAS_W, viewport.h / CANVAS_H) * 0.9;
+      const tx = (viewport.w - CANVAS_W * scale) / 2;
+      const ty = (viewport.h - CANVAS_H * scale) / 2;
       return { transform: `translate(${tx}px, ${ty}px) scale(${scale})` };
     } else {
       const node = STORY_NODES[activeNodeId];
@@ -110,7 +99,7 @@ export default function MapView({ onBackToLanding }: Props) {
       {/* ── MAP CANVAS (pans & zooms in background) ── */}
       <div
         className="absolute top-0 left-0 origin-top-left transition-transform duration-1000 ease-[cubic-bezier(0.25,1,0.5,1)]"
-        style={{ width: CANVAS_WIDTH, height: CANVAS_HEIGHT, ...cameraTransform }}
+        style={{ width: CANVAS_W, height: CANVAS_H, ...cameraTransform }}
       >
         {/* SVG Edge Layer */}
         <svg className="absolute inset-0 w-full h-full pointer-events-none">
@@ -186,7 +175,7 @@ export default function MapView({ onBackToLanding }: Props) {
                 </button>
 
                 {showHistoryDropdown && (
-                  <div className="absolute right-0 mt-2 w-64 bg-white rounded-xl shadow-2xl border border-neutral-100 overflow-hidden z-50 animate-in fade-in slide-in-from-top-2">
+                  <div className="absolute right-0 mt-2 w-64 bg-white rounded-xl shadow-2xl border border-neutral-100 overflow-hidden z-50 opacity-0 animate-[fadeSlideDown_150ms_ease_forwards]">
                     <div className="px-4 py-2 bg-neutral-50 border-b border-neutral-100 text-xs font-bold text-neutral-500 uppercase tracking-widest">
                       Path Taken
                     </div>
@@ -196,7 +185,7 @@ export default function MapView({ onBackToLanding }: Props) {
                       <div className="max-h-60 overflow-y-auto">
                         {history.map((nodeId, index) => (
                           <button
-                            key={index}
+                            key={`${nodeId}-${index}`}
                             onClick={() => jumpToHistory(index)}
                             className="w-full text-left px-4 py-3 hover:bg-red-50 border-l-2 border-transparent hover:border-red-500 transition-colors flex items-center group"
                           >

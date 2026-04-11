@@ -2,10 +2,9 @@ import { useState, useEffect, useMemo } from 'react';
 import type { ReactNode } from 'react';
 import { Map, ChevronDown } from 'lucide-react';
 import STORY_NODES, { EDGES } from '../data/storyNodes';
-import type { StoryConfig, StoryContentBlock, NodeCategory } from '../types';
-
-const CANVAS_W = 6700;
-const CANVAS_H = 4500;
+import type { StoryConfig, StoryContentBlock } from '../types';
+import { CANVAS_W, CANVAS_H, MOBILE_BREAKPOINT } from '../config/constants';
+import { BORDER_COLOR, CATEGORY_LABEL, CATEGORY_LEFT_BORDER } from '../config/categoryStyles';
 
 // ─── Animation & layout config ────────────────────────────────────────────────
 // All scroll pacing, camera, transition, and layout parameters live here.
@@ -149,34 +148,6 @@ function buildPhases(storyConfig: StoryConfig, vh: number): Phase[] {
   return phases;
 }
 
-// ─── Visual maps ──────────────────────────────────────────────────────────────
-
-const BORDER_COLOR: Record<NodeCategory, string> = {
-  hotline:       'border-yellow-400',
-  cares:         'border-green-400',
-  warning:       'border-amber-400',
-  investigation: 'border-red-400',
-  court:         'border-red-700',
-  neutral:       'border-neutral-500',
-};
-
-const CATEGORY_LABEL: Record<NodeCategory, string> = {
-  hotline:       'text-yellow-400',
-  cares:         'text-green-400',
-  warning:       'text-amber-400',
-  investigation: 'text-red-400',
-  court:         'text-red-500',
-  neutral:       'text-neutral-400',
-};
-
-const CATEGORY_LEFT_BORDER: Record<NodeCategory, string> = {
-  hotline:       'border-yellow-400',
-  cares:         'border-green-400',
-  warning:       'border-amber-400',
-  investigation: 'border-red-400',
-  court:         'border-red-600',
-  neutral:       'border-neutral-500',
-};
 
 // ─── Block renderer ───────────────────────────────────────────────────────────
 
@@ -285,7 +256,7 @@ export default function StoryPage({ storyConfig, onExploreMap }: Props) {
 
   const isStat      = phaseType === 'node-stat';
   const showContent = phaseType === 'node-story' || phaseType === 'node-stat';
-  const isMobile    = vw < 768;
+  const isMobile    = vw < MOBILE_BREAKPOINT;
 
   const currentStatIndex = phase.type === 'node-stat' ? phase.statIndex : -1;
 
@@ -580,21 +551,19 @@ export default function StoryPage({ storyConfig, onExploreMap }: Props) {
                 <div className="w-12 h-1 bg-red-500 mt-4 rounded-full" />
               </div>
               <p className="text-neutral-300 text-lg leading-relaxed">{storyConfig.ending.description}</p>
-              <div className="border border-neutral-800 rounded-2xl p-6 space-y-4">
-                <p className="text-xs font-bold uppercase tracking-widest text-neutral-500">What Can Be Done</p>
-                <div className="space-y-3">
-                  {[
-                    'Support The Bronx Defenders and families facing family policing',
-                    'Advocate for direct financial support to families in poverty',
-                    'Demand accountability and reform at the State Central Register',
-                  ].map(action => (
-                    <div key={action} className="flex gap-3 text-sm text-neutral-400">
-                      <span className="text-red-500 shrink-0 mt-0.5">→</span>
-                      <span>{action}</span>
-                    </div>
-                  ))}
+              {storyConfig.ending.actions && storyConfig.ending.actions.length > 0 && (
+                <div className="border border-neutral-800 rounded-2xl p-6 space-y-4">
+                  <p className="text-xs font-bold uppercase tracking-widest text-neutral-500">What Can Be Done</p>
+                  <div className="space-y-3">
+                    {storyConfig.ending.actions.map(action => (
+                      <div key={action} className="flex gap-3 text-sm text-neutral-400">
+                        <span className="text-red-500 shrink-0 mt-0.5">→</span>
+                        <span>{action}</span>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              </div>
+              )}
               <div className="flex flex-col sm:flex-row gap-3">
                 <button
                   onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}

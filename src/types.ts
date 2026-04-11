@@ -75,6 +75,7 @@ export interface StoryIntro {
 export interface StoryEnding {
   title: string;
   description: string;
+  actions?: string[]; // call-to-action items shown at the end of the story
 }
 
 export interface StoryConfig {

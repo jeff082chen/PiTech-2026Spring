@@ -249,5 +249,10 @@ export const MARIA_STORY: StoryConfig = {
     title: 'The System Stays',
     description:
       "Maria's case is eventually closed — fourteen months after that first knock on her door. Her children were never in danger. The original report was never substantiated. But the record of her investigation remains on the State Central Register. The trauma of fourteen months of surveillance remains. And somewhere in the Bronx tonight, another family is receiving a knock at their door.",
+    actions: [
+      'Support The Bronx Defenders and families facing family policing',
+      'Advocate for direct financial support to families in poverty',
+      'Demand accountability and reform at the State Central Register',
+    ],
   },
 };
