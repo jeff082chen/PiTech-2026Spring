@@ -47,8 +47,6 @@ const SCROLL_CONFIG = {
     screenFade:  '600ms ease',
     focusHint:   '400ms ease',
     cardSlide:   '500ms cubic-bezier(0.25,1,0.5,1)',
-    statOpacity: '400ms ease',
-    statSlide:   '500ms cubic-bezier(0.25,1,0.5,1)',
     progressBar: '500ms ease-out',
   },
 
@@ -65,7 +63,18 @@ const SCROLL_CONFIG = {
     cardStatLeftFrac:  0.03,  // card left edge fraction when stat panel is visible
     statPanelLeftFrac: 0.50,  // stat panel left edge fraction
     statPanelGapPx:    16,    // px gap added to stat panel left edge
-    statSlideOffset:   '3rem', // hidden-state translateX offset for stat panel
+  },
+
+  // Scroll-driven stat animation: fraction of the stat phase used for entrance/exit.
+  // Entrance: t 0 → statEnterZone  — stat slides up from below and fades in.
+  // Hold:     t statEnterZone → statExitZone — stat is fully visible and static.
+  // Exit:     t statExitZone → 1  — stat slides further up and fades out.
+  // Adjusting these values changes the rhythm of the vertical stat scroll.
+  statAnim: {
+    enterZone:    0.25,  // fraction of phase dedicated to entrance
+    exitZone:     0.75,  // fraction of phase at which exit begins
+    enterOffsetPx: 64,   // starting translateY for entrance (px below resting position)
+    exitOffsetPx:  32,   // ending translateY for exit (px above resting position)
   },
 } as const;
 
@@ -306,8 +315,17 @@ export default function StoryPage({ storyConfig, onExploreMap }: Props) {
     ? vw * layout.cardStatLeftFrac
     : (vw - CARD_W) / 2;
 
-  const statLeft   = vw * layout.statPanelLeftFrac + layout.statPanelGapPx;
+  const statLeft    = vw * layout.statPanelLeftFrac + layout.statPanelGapPx;
   const statVisible = isStat && !isMobile;
+
+  // ── Scroll-driven stat entrance / exit (desktop only) ──────────────────────
+  // Stats scroll upward as the user advances: each stat enters from below,
+  // holds in the centre of the phase, then exits upward into the next.
+  const { statAnim } = SCROLL_CONFIG;
+  const statEntranceT  = isStat ? easeInOut(Math.min(1, t / statAnim.enterZone)) : 0;
+  const statExitT      = isStat ? easeInOut(Math.max(0, (t - statAnim.exitZone) / (1 - statAnim.exitZone))) : 0;
+  const statTranslateY = lerp(statAnim.enterOffsetPx, 0, statEntranceT) + lerp(0, -statAnim.exitOffsetPx, statExitT);
+  const statOpacity    = isStat ? statEntranceT * (1 - statExitT) : 0;
 
   return (
     <div style={{ height: totalHeight }} className="relative bg-neutral-950">
@@ -471,16 +489,15 @@ export default function StoryPage({ storyConfig, onExploreMap }: Props) {
             </div>
           </div>
 
-          {/* Stat panel — slides in from right (desktop only) */}
+          {/* Stat panel — scroll-driven vertical entrance/exit (desktop only) */}
           {!isMobile && (
             <div
               className="absolute top-0 bottom-0 flex flex-col justify-center py-20 px-6 overflow-y-auto"
               style={{
                 width: STAT_W,
                 left: statLeft,
-                opacity: statVisible ? 1 : 0,
-                transform: statVisible ? 'translateX(0)' : `translateX(${layout.statSlideOffset})`,
-                transition: `opacity ${transitions.statOpacity}, transform ${transitions.statSlide}`,
+                opacity: statOpacity,
+                transform: `translateY(${statTranslateY}px)`,
                 pointerEvents: statVisible ? 'auto' : 'none',
               }}
             >

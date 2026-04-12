@@ -332,12 +332,20 @@ const SCROLL_CONFIG = {
     overlay:     '600ms ease',
     screenFade:  '600ms ease',
     cardSlide:   '500ms cubic-bezier(0.25,1,0.5,1)',
-    // ...
+    progressBar: '500ms ease-out',
   },
   layout: {
-    cardMaxPx:      540,   // max story card width (px)
-    cardFraction:   0.46,  // story card width as fraction of viewport width
+    cardMaxPx:         540,   // max story card width (px)
+    cardFraction:      0.46,  // story card width as fraction of viewport width
+    cardStatLeftFrac:  0.03,  // card left edge position when stat panel is visible
+    statPanelLeftFrac: 0.50,  // stat panel left edge position
     // ...
+  },
+  statAnim: {
+    enterZone:     0.25,  // first 25% of stat phase = entrance (slide up + fade in)
+    exitZone:      0.75,  // last 25% of stat phase = exit (slide further up + fade out)
+    enterOffsetPx: 64,    // starting translateY offset (px below resting position)
+    exitOffsetPx:  32,    // ending translateY offset (px above resting position)
   },
 }
 ```
