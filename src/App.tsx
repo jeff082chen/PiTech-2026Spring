@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import StoryPage from './components/StoryPage';
 import MapView from './components/MapView';
-import { MARIA_STORY } from './data/mariaStory';
+import type { StoryConfig } from './types';
+import mariaJson from './data/stories/maria.json';
 
-// LandingPage is deprecated — its visual content has been migrated to
-// src/data/statistics.tsx. StoryPage is now the main entry experience.
+const MARIA_STORY = mariaJson as StoryConfig;
 
 type View = 'story' | 'map';
 

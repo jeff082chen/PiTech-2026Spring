@@ -1,0 +1,558 @@
+{
+  "start-pipeline": {
+    "id": "start-pipeline",
+    "nodeId": "start",
+    "sources": [
+      { "label": "NYC ACS Annual Report 2023" },
+      { "label": "OCFS Statewide Central Register Data" }
+    ],
+    "chart": {
+      "type": "pipeline",
+      "label": "From Call to Removal — NYC, 2023",
+      "stages": [
+        { "label": "SCR Hotline Calls",    "pct": 100, "color": "neutral", "note": "95,590" },
+        { "label": "Passed to Agencies",   "pct": 75,  "color": "neutral", "note": "75%" },
+        { "label": "Formal Investigation", "pct": 53,  "color": "amber",   "note": "~53%" },
+        { "label": "CARES Track",          "pct": 22,  "color": "amber",   "note": "22%" },
+        { "label": "Indicated",            "pct": 17,  "color": "red",     "note": "~17%" },
+        { "label": "Children Removed",     "pct": 8,   "color": "red",     "note": "~8%" }
+      ]
+    }
+  },
+
+  "start-scr-counter": {
+    "id": "start-scr-counter",
+    "nodeId": "start",
+    "sources": [
+      { "label": "OCFS Annual Report 2023" }
+    ],
+    "chart": {
+      "type": "two-counter",
+      "label": "New York City, 2023",
+      "primary": {
+        "value": "95,590",
+        "description": "calls to the SCR hotline",
+        "accentColor": "neutral"
+      },
+      "secondary": {
+        "value": "22,120",
+        "description": "ever substantiated",
+        "qualifier": "(23.1%)",
+        "accentColor": "neutral"
+      },
+      "note": "Over 73,000 families were investigated and found to have done nothing wrong."
+    }
+  },
+
+  "scr-acceptance-rate": {
+    "id": "scr-acceptance-rate",
+    "nodeId": "scr_screening",
+    "sources": [
+      { "label": "Child Welfare Information Gateway, 2021" }
+    ],
+    "chart": {
+      "type": "bar-compare",
+      "label": "SCR Call Acceptance Rate",
+      "bars": [
+        { "value": "75%", "label": "New York",     "heightPct": 100, "accentColor": "red" },
+        { "value": "50%", "label": "National Avg.", "heightPct": 67,  "accentColor": "neutral" }
+      ],
+      "note": "New York passes 3 in 4 calls.\nMost states pass 1 in 2."
+    }
+  },
+
+  "scr-anonymous-tips": {
+    "id": "scr-anonymous-tips",
+    "nodeId": "scr_screening",
+    "sources": [
+      { "label": "NYC ACS Data Dashboard 2023" }
+    ],
+    "chart": {
+      "type": "card-compare",
+      "variant": "stat",
+      "label": "Substantiation Rate Comparison",
+      "left": {
+        "header": "Anonymous Tips",
+        "accentColor": "neutral",
+        "preValue": "1 in 24 cases",
+        "value": "6.7%",
+        "postValue": "substantiated"
+      },
+      "right": {
+        "header": "All Cases",
+        "accentColor": "red",
+        "preValue": "\u00a0",
+        "value": "22.5%",
+        "postValue": "substantiated"
+      },
+      "note": "Both families receive an investigator at the door."
+    }
+  },
+
+  "scr-case-volume": {
+    "id": "scr-case-volume",
+    "nodeId": "scr_screening",
+    "sources": [
+      { "label": "NYC ACS Annual Reports 2004–2023" },
+      { "label": "OCFS CARES Data" }
+    ],
+    "chart": {
+      "type": "line-chart",
+      "label": "ACS Case Volume, 2004–2023",
+      "xAxis": { "type": "year", "min": 2004, "max": 2023 },
+      "yAxis": { "min": 0, "max": 110000, "format": "number" },
+      "series": [
+        {
+          "id": "acs-cases",
+          "label": "ACS Cases",
+          "accentColor": "red",
+          "dashed": false,
+          "areaFill": true,
+          "points": [
+            { "x": 2004, "y": 72000 },
+            { "x": 2006, "y": 69000 },
+            { "x": 2008, "y": 65000 },
+            { "x": 2010, "y": 62000 },
+            { "x": 2013, "y": 91000 },
+            { "x": 2015, "y": 108000 },
+            { "x": 2017, "y": 82000 },
+            { "x": 2019, "y": 66000 },
+            { "x": 2021, "y": 59000 },
+            { "x": 2022, "y": 55000 },
+            { "x": 2023, "y": 54000 }
+          ]
+        },
+        {
+          "id": "cares-share",
+          "label": "CARES share",
+          "accentColor": "amber",
+          "dashed": true,
+          "areaFill": false,
+          "points": [
+            { "x": 2004, "y": 2000  },
+            { "x": 2008, "y": 5000  },
+            { "x": 2013, "y": 10000 },
+            { "x": 2018, "y": 14000 },
+            { "x": 2021, "y": 18000 },
+            { "x": 2023, "y": 22000 }
+          ]
+        }
+      ],
+      "annotations": [
+        { "x": 2020, "spanYears": 1, "label": "COVID" }
+      ],
+      "note": "Cases fell when children were home and out of sight of mandated reporters. They rose again when schools reopened."
+    }
+  },
+
+  "safety-warrant-rate": {
+    "id": "safety-warrant-rate",
+    "nodeId": "safety_assessment",
+    "sources": [
+      { "label": "NYC ACS records, 2010–2020" },
+      { "label": "Bronx Defenders client data" }
+    ],
+    "chart": {
+      "type": "component",
+      "componentId": "WarrantBox",
+      "data": {
+        "label": "ACS Home Entries Per Year",
+        "total": "~56,400",
+        "totalLabel": "ACS home entries",
+        "highlight": "94 warrants",
+        "warrantRate": "<0.2%"
+      }
+    }
+  },
+
+  "safety-investigator-quotes": {
+    "id": "safety-investigator-quotes",
+    "nodeId": "safety_assessment",
+    "sources": [
+      { "label": "Bronx Defenders, This Wound Is Still Fresh, 2023" }
+    ],
+    "chart": {
+      "type": "quote-list",
+      "label": "Documented Investigator Tactics — Bronx Families",
+      "quotes": [
+        { "text": "\"I'm not going to stop coming.\"" },
+        { "text": "\"Why not, if you don't have anything to hide?\"" },
+        { "text": "\"We can do this the easy way or I can get a warrant.\"" }
+      ],
+      "note": "Documented tactics reported by ACS-investigated families in the Bronx. Families have no right to counsel at this stage."
+    }
+  },
+
+  "cares-trend": {
+    "id": "cares-trend",
+    "nodeId": "cares_track",
+    "sources": [
+      { "label": "NYC ACS Annual Reports 2016–2024" },
+      { "label": "Bronx Defenders, This Wound Is Still Fresh, 2023" }
+    ],
+    "chart": {
+      "type": "line-chart",
+      "label": "CARES Share of ACS Cases",
+      "xAxis": { "type": "year", "min": 2016, "max": 2024 },
+      "yAxis": { "min": 0, "max": 25, "format": "percent" },
+      "series": [
+        {
+          "id": "cares-pct",
+          "label": "CARES %",
+          "accentColor": "amber",
+          "dashed": false,
+          "areaFill": true,
+          "points": [
+            { "x": 2016, "y": 4 },
+            { "x": 2018, "y": 8 },
+            { "x": 2020, "y": 13 },
+            { "x": 2022, "y": 18 },
+            { "x": 2024, "y": 22 }
+          ]
+        }
+      ],
+      "callout": {
+        "text": "Reform in name. The pipeline remains.",
+        "subtext": "\"CARES may function as another surveillance program.\" — The Bronx Defenders, This Wound Is Still Fresh"
+      }
+    }
+  },
+
+  "investigation-race-rates": {
+    "id": "investigation-race-rates",
+    "nodeId": "investigation",
+    "sources": [
+      { "label": "NYC ACS Data Dashboard 2021" },
+      { "label": "Center for the Study of Social Policy" }
+    ],
+    "chart": {
+      "type": "horizontal-bars",
+      "label": "% of Children Investigated by ACS, 2021",
+      "bars": [
+        { "label": "Black children",  "pct": 44, "accentColor": "red" },
+        { "label": "Latino children", "pct": 43, "accentColor": "amber" },
+        { "label": "White children",  "pct": 19, "accentColor": "neutral" }
+      ],
+      "callout": "A Black child in NYC has nearly a **50% chance** of being investigated by age 18."
+    }
+  },
+
+  "determination-dragnet": {
+    "id": "determination-dragnet",
+    "nodeId": "determination",
+    "sources": [
+      { "label": "NYC ACS Data Dashboard FY2023" }
+    ],
+    "chart": {
+      "type": "stacked-bars",
+      "label": "FY 2023 — What Follows a Report",
+      "leftLabel": "Indicated",
+      "rightLabel": "unsubstantiated",
+      "rows": [
+        { "label": "Black & Latino families", "leftPct": 18 },
+        { "label": "White families",           "leftPct": 24 },
+        { "label": "All families",             "leftPct": 23 }
+      ],
+      "note": "In FY 2023, 56.6% of all intakes were unsubstantiated. The system is a high-volume, low-yield dragnet."
+    }
+  },
+
+  "determination-record": {
+    "id": "determination-record",
+    "nodeId": "determination",
+    "sources": [
+      { "label": "NY Social Services Law §422" }
+    ],
+    "chart": {
+      "type": "big-number",
+      "label": "How Long an \"Indicated\" Finding Stays on Your Record",
+      "value": "28",
+      "unit": "years",
+      "accentColor": "red",
+      "description": "An \"indicated\" finding — requiring only \"some credible evidence\" — can remain on the State Central Register for up to 28 years.",
+      "tags": [
+        "Employment checks",
+        "Housing applications",
+        "Future custody cases",
+        "Professional licensing"
+      ]
+    }
+  },
+
+  "case-plan-coercion": {
+    "id": "case-plan-coercion",
+    "nodeId": "case_plan",
+    "sources": [
+      { "label": "Dettlaff et al., Child Welfare, 2020" },
+      { "label": "Movement for Family Power, 2020" }
+    ],
+    "chart": {
+      "type": "highlight-callout",
+      "label": "The Reality of \"Voluntary\" Service Plans",
+      "highlight": {
+        "value": "9 in 10",
+        "description": "families report experiencing ACS \"voluntary\" agreements as coercive",
+        "accentColor": "amber"
+      },
+      "bullets": [
+        "Refusing services = evidence of non-cooperation",
+        "Non-cooperation = basis for court petition",
+        "Compliance extends monitoring, not ends it"
+      ],
+      "note": "\"Voluntary\" is a legal term, not an accurate description of how families experience these agreements. — Dettlaff et al., Child Welfare, 2020"
+    }
+  },
+
+  "court-geography": {
+    "id": "court-geography",
+    "nodeId": "court_filing",
+    "sources": [
+      { "label": "NYC Family Court Filing Data FY2023" },
+      { "label": "NYC 2020 Census — Median Household Income" }
+    ],
+    "chart": {
+      "type": "card-compare",
+      "variant": "district",
+      "label": "FY 2023 — Geography of Intervention",
+      "left": {
+        "name": "Highbridge / Concourse",
+        "subtitle": "South Bronx",
+        "code": "District BX04",
+        "accentColor": "red",
+        "rows": [
+          { "key": "SCR Intakes",        "value": "1,462" },
+          { "key": "Article X Filings",  "value": "149" },
+          { "key": "Median Income",      "value": "$28K" }
+        ]
+      },
+      "right": {
+        "name": "Park Slope",
+        "subtitle": "Brooklyn",
+        "code": "District BK06",
+        "accentColor": "neutral",
+        "rows": [
+          { "key": "SCR Intakes",        "value": "333" },
+          { "key": "Article X Filings",  "value": "14" },
+          { "key": "Median Income",      "value": "$112K" }
+        ]
+      },
+      "note": "Same system. Opposite outcomes."
+    }
+  },
+
+  "court-marianna": {
+    "id": "court-marianna",
+    "nodeId": "court_hearing",
+    "sources": [
+      { "label": "Bronx Defenders client documentation, 2022" }
+    ],
+    "chart": {
+      "type": "big-number",
+      "label": "A Direct and Documented Consequence",
+      "value": "2",
+      "unit": "nights in pain",
+      "accentColor": "neutral",
+      "description": "Marianna Azar refused opioid painkillers after abdominal surgery — not because of addiction, but because she feared ACS would interpret medication on her bedside table as evidence of substance abuse.",
+      "footer": "State-induced fear, documented by her attorney."
+    }
+  },
+
+  "court-duration": {
+    "id": "court-duration",
+    "nodeId": "court_hearing",
+    "sources": [
+      { "label": "Bronx Defenders, 2023" },
+      { "label": "NYC Family Court caseload data" }
+    ],
+    "chart": {
+      "type": "timeline-bar",
+      "label": "How Long a Family Court Case Takes",
+      "headline": {
+        "value": "18",
+        "unit": "months average",
+        "accentColor": "red"
+      },
+      "segments": [
+        { "label": "Initial hearing",      "widthPct": 8,  "accentColor": "neutral" },
+        { "label": "Investigation period", "widthPct": 15, "accentColor": "amber" },
+        { "label": "Service compliance",   "widthPct": 30, "accentColor": "orange" },
+        { "label": "Follow-up hearings",   "widthPct": 47, "accentColor": "red" }
+      ],
+      "note": "Each hearing lasts ~30 minutes. The case lasts months to years."
+    }
+  },
+
+  "supervision-renewal": {
+    "id": "supervision-renewal",
+    "nodeId": "supervision_order",
+    "sources": [
+      { "label": "Movement for Family Power, 2020" },
+      { "label": "NYC ACS case outcome data" }
+    ],
+    "chart": {
+      "type": "grid-cards",
+      "label": "After the Supervision Order",
+      "columns": 2,
+      "cardStyle": "colored",
+      "cards": [
+        {
+          "value": "1 in 3",
+          "description": "supervision orders are renewed at least once",
+          "accentColor": "red"
+        },
+        {
+          "value": "monthly",
+          "description": "ACS home visits required under supervision",
+          "accentColor": "amber"
+        }
+      ],
+      "infoBox": {
+        "title": "Any of the following can trigger escalation:",
+        "bullets": [
+          "A new concern reported to the hotline",
+          "Missed service appointment",
+          "Housing or employment instability",
+          "Caseworker's subjective assessment"
+        ]
+      }
+    }
+  },
+
+  "removal-cost": {
+    "id": "removal-cost",
+    "nodeId": "foster_care_removal",
+    "sources": [
+      { "label": "NYC ACS Budget Data 2024" },
+      { "label": "Vera Institute, The Costs of Foster Care" }
+    ],
+    "chart": {
+      "type": "cost-compare",
+      "label": "Annual Cost Comparison",
+      "items": [
+        {
+          "description": "To separate a child from their family",
+          "value": "$107,200",
+          "note": "per child · per year · 2024",
+          "accentColor": "red"
+        },
+        {
+          "description": "To keep Eline's family together",
+          "value": "$3,600",
+          "note": "per year ($300/month housing subsidy)",
+          "accentColor": "neutral"
+        }
+      ],
+      "conclusion": "The system chose separation."
+    }
+  },
+
+  "removal-marginal-cases": {
+    "id": "removal-marginal-cases",
+    "nodeId": "foster_care_removal",
+    "sources": [
+      { "label": "Doyle, Journal of Political Economy, 2007" },
+      { "label": "Annie E. Casey Foundation" }
+    ],
+    "chart": {
+      "type": "big-number",
+      "label": "For \"Marginal Cases\" — Where Evidence Is Ambiguous",
+      "value": "3×",
+      "accentColor": "red",
+      "description": "Foster care placement can result in an adult arrest rate up to 3× higher than if the child had stayed home.",
+      "footer": "Researchers controlling for pre-existing conditions still find that placement itself causes harm — not just the circumstances that led to it."
+    }
+  },
+
+  "kinship-support-gap": {
+    "id": "kinship-support-gap",
+    "nodeId": "kinship_placement",
+    "sources": [
+      { "label": "Kinship Care Initiative Report, 2021" }
+    ],
+    "chart": {
+      "type": "grid-cards",
+      "label": "Support for Kinship vs. Non-Relative Foster Caregivers",
+      "columns": 2,
+      "cardStyle": "dark",
+      "cards": [
+        {
+          "value": "Less",
+          "description": "financial support for kinship caregivers",
+          "accentColor": "neutral"
+        },
+        {
+          "value": "Fewer",
+          "description": "services offered to kinship families",
+          "accentColor": "neutral"
+        }
+      ],
+      "infoBox": {
+        "title": "Note:",
+        "bullets": [
+          "Kinship placement produces better child outcomes — yet the families who take on this role receive less support than licensed strangers."
+        ]
+      }
+    }
+  },
+
+  "group-home-outcomes": {
+    "id": "group-home-outcomes",
+    "nodeId": "group_home",
+    "sources": [
+      { "label": "Annie E. Casey Foundation, 2021" },
+      { "label": "Chapin Hall at the University of Chicago" }
+    ],
+    "chart": {
+      "type": "grid-cards",
+      "label": "Long-Term Outcomes for Foster Youth",
+      "columns": 2,
+      "cardStyle": "dark",
+      "cards": [
+        {
+          "value": "28%",
+          "description": "of homeless adults spent time in foster care",
+          "accentColor": "red"
+        },
+        {
+          "value": "20%",
+          "description": "of prison inmates under 30 have a foster care history",
+          "accentColor": "red"
+        },
+        {
+          "value": "2×",
+          "description": "higher teen birth rate for girls placed in foster care",
+          "accentColor": "red"
+        },
+        {
+          "value": "−15pp",
+          "description": "employment reduction in young adulthood",
+          "accentColor": "red"
+        }
+      ]
+    }
+  },
+
+  "group-home-placement-instability": {
+    "id": "group-home-placement-instability",
+    "nodeId": "group_home",
+    "sources": [
+      { "label": "US DOJ Investigation into NYS OCFS, 2022" },
+      { "label": "Chapin Hall, Midwest Evaluation of the Adult Functioning of Former Foster Youth" }
+    ],
+    "chart": {
+      "type": "component",
+      "componentId": "PlacementInstability",
+      "data": {
+        "iconCount": 4,
+        "highlightIndex": 3,
+        "highlightLabel": "3+ moves",
+        "headline": "1 in 4 foster children experiences 3 or more placement disruptions.",
+        "metrics": [
+          { "value": "40,000", "label": "children in care (1999)" },
+          { "value": "<7,000", "label": "children in care (2024)" }
+        ],
+        "note": "Progress in volume. No change in logic."
+      }
+    }
+  }
+}

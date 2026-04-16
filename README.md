@@ -4,6 +4,33 @@ An interactive scrollytelling experience built in partnership with **The Bronx D
 
 ---
 
+## Table of Contents
+
+1. [Quick Start](#quick-start)
+2. [Tech Stack](#tech-stack)
+3. [Project Structure](#project-structure)
+4. [Architecture Overview](#architecture-overview)
+5. [Editing Content Without Code](#editing-content-without-code)
+   - [Editing Story Text](#editing-story-text-srcdatastoriesmariajson)
+   - [Editing Statistics](#editing-statistics-srcdataconfigstatisticsjson)
+   - [Editing Nodes](#editing-nodes-srcdataconfignodesjson)
+6. [Statistics Chart Types](#statistics-chart-types)
+7. [Developer Guides](#developer-guides)
+   - [Add a New Statistic](#add-a-new-statistic)
+   - [Add a New Story Character](#add-a-new-story-character)
+   - [Add or Edit a Flowchart Node](#add-or-edit-a-flowchart-node)
+   - [Add a New Chart Type (Escape Hatch)](#add-a-new-chart-type-escape-hatch)
+   - [Add a New Icon](#add-a-new-icon)
+   - [Tune the Scroll Experience](#tune-the-scroll-experience)
+8. [Reference Tables](#reference-tables)
+   - [Icon Registry](#icon-registry)
+   - [AccentColor Reference](#accentcolor-reference)
+   - [Node ID Reference](#node-id-reference)
+9. [Types Reference](#types-reference)
+10. [Roadmap](#roadmap)
+
+---
+
 ## Quick Start
 
 ```bash
@@ -45,24 +72,61 @@ No routing library. Two top-level views managed by a single `useState` in `App.t
 
 ```
 src/
-├── App.tsx                   Top-level view router ('story' | 'map')
-├── main.tsx                  React entry point
-├── index.css                 Tailwind directives
-├── types.ts                  All shared TypeScript interfaces
+├── App.tsx                        Top-level view router ('story' | 'map')
+├── main.tsx                       React entry point
+├── index.css                      Tailwind directives
+├── types.ts                       All shared TypeScript interfaces
 │
 ├── config/
-│   ├── constants.ts          Shared numeric constants (canvas size, breakpoints)
-│   └── categoryStyles.ts     Shared Tailwind class maps keyed by NodeCategory
+│   ├── constants.ts               Shared numeric constants (canvas size, breakpoints)
+│   ├── categoryStyles.ts          Tailwind class maps keyed by NodeCategory
+│   └── iconRegistry.ts            String → lucide-react component lookup table
 │
-├── components/
-│   ├── StoryPage.tsx         Scroll-driven narrative experience (primary view)
-│   └── MapView.tsx           Free-explore click-to-navigate map (secondary view)
+├── data/
+│   ├── storyNodes.tsx             Adapter: nodes.json + statistics.json → StoryNode[]
+│   ├── config/
+│   │   ├── nodes.json             ← EDIT HERE: flowchart nodes, positions, icons, choices
+│   │   └── statistics.json        ← EDIT HERE: all 21 stat charts (declarative schema)
+│   └── stories/
+│       └── maria.json             ← EDIT HERE: Maria's story text, path, intro, ending
 │
-└── data/
-    ├── storyNodes.tsx        15-node system graph + EDGES (shared across all stories)
-    ├── statistics.tsx        Visual stat components attached to nodes
-    └── mariaStory.ts         Maria's narrative config (path + story text + ending)
+└── components/
+    ├── StoryPage.tsx              Scroll-driven narrative experience (primary view)
+    ├── MapView.tsx                Free-explore click-to-navigate map (secondary view)
+    └── charts/
+        ├── StatRenderer.tsx       Dispatch: chart.type → correct renderer component
+        ├── accentMap.ts           AccentColor token → Tailwind class lookup tables
+        ├── BigNumber.tsx          Renderer: big-number
+        ├── TwoCounter.tsx         Renderer: two-counter
+        ├── Pipeline.tsx           Renderer: pipeline
+        ├── BarCompare.tsx         Renderer: bar-compare
+        ├── CardCompare.tsx        Renderer: card-compare (stat + district variants)
+        ├── HorizontalBars.tsx     Renderer: horizontal-bars
+        ├── StackedBars.tsx        Renderer: stacked-bars
+        ├── QuoteList.tsx          Renderer: quote-list
+        ├── HighlightCallout.tsx   Renderer: highlight-callout
+        ├── GridCards.tsx          Renderer: grid-cards
+        ├── CostCompare.tsx        Renderer: cost-compare
+        ├── TimelineBar.tsx        Renderer: timeline-bar
+        ├── LineChart.tsx          Renderer: line-chart
+        ├── customRegistry.ts      componentId string → custom component lookup
+        └── custom/
+            ├── WarrantBox.tsx     Bespoke: warrant rate area chart
+            └── PlacementInstability.tsx  Bespoke: figure silhouettes
 ```
+
+### What lives where
+
+| You want to change… | Edit this file |
+|---------------------|---------------|
+| Story text, quotes, callouts | `src/data/stories/maria.json` |
+| A statistic's numbers or chart data | `src/data/config/statistics.json` |
+| A node's title, description, icon, position | `src/data/config/nodes.json` |
+| Which statistics appear on a node | `src/data/config/nodes.json` → `statisticIds` |
+| Node category colours | `src/config/categoryStyles.ts` |
+| Scroll pacing, zoom levels, transitions | `src/components/StoryPage.tsx` → `SCROLL_CONFIG` |
+| A new story character | New file in `src/data/stories/` |
+| A completely new chart type | New file in `src/components/charts/` |
 
 ---
 
@@ -77,237 +141,840 @@ src/
 'map'    →  <MapView onBackToLanding={...} />
 ```
 
-The "Explore Full Map" button in `StoryPage` (and the ending screen) switches to `'map'`.
-The "Home" button in `MapView` returns to `'story'`.
-
 ### Three-layer data model
 
 ```
-storyNodes.tsx          ← System graph (shared foundation)
-    └── statistics.tsx  ← Visual stat components attached to nodes
-mariaStory.ts           ← Character-specific narrative (path + story text)
+src/data/config/nodes.json       ← Layer 1: system graph (nodes, edges, positions)
+         │
+         └── statisticIds[]  →  src/data/config/statistics.json  ← Layer 2: chart data
+                                         │
+                                         └── StatRenderer → BigNumber / Pipeline / ...
+
+src/data/stories/maria.json      ← Layer 3: character-specific narrative
 ```
 
-**System graph** defines the institutional flowchart — all 15 nodes, their positions, descriptions, icons, choices, and attached statistics. This layer is shared by both views and by every story.
+**Layer 1 — System graph** defines the institutional flowchart: all 15 nodes, their canvas positions, category, icon, system description, forward choices, and which statistics to attach. This layer is shared by both views and by every story.
 
-**Narrative config** (`StoryConfig`) defines one character's journey: which nodes they pass through, the personal story text for each node, and the ending screen. A new character = a new config file, no component changes needed.
+**Layer 2 — Statistics** is a declarative JSON registry of all 21 stat entries. Each entry has a `chart` object with a `type` field; `StatRenderer` reads the type and dispatches to the correct renderer component. The renderer turns JSON data into a React visual — no JSX in the data file.
 
-**Statistics** are React components (charts, counters) attached to nodes in `storyNodes.tsx`. They appear as additional scroll phases in `StoryPage` after each node's story text.
+**Layer 3 — Story config** (`StoryConfig`) defines one character's journey: which nodes they pass through (`path[]`), the personal story text for each node (`nodeContent`), and the intro/ending screens. A new character = a new JSON file, zero component changes.
+
+### Runtime data flow
+
+```
+nodes.json
+    │  cfg.icon (string) ──────────────────→ ICON_REGISTRY → <LucideIcon />
+    │  cfg.statisticIds[] ─→ statistics.json → StatRenderer → chart renderers
+    └─────────────────────────────────────────────────────────→ StoryNode[]
+
+stories/maria.json ──────────────────────────────────────────→ StoryPage
+                                             path[] → node sequence
+                                             nodeContent → story card text
+                                             character/intro/ending → screens
+```
 
 ---
 
-## Config Files
+## Editing Content Without Code
 
-### `src/config/constants.ts`
-
-Shared numeric values used by both `StoryPage` and `MapView`.
-
-```ts
-export const CANVAS_W = 6700;          // canvas coordinate space width (px)
-export const CANVAS_H = 4500;          // canvas coordinate space height (px)
-export const MOBILE_BREAKPOINT = 768;  // matches Tailwind's `md` breakpoint
-```
-
-If you ever resize the canvas or change the responsive breakpoint, change it here — both views update automatically.
-
-### `src/config/categoryStyles.ts`
-
-Tailwind class maps keyed by `NodeCategory`. Used for node card borders, story card accents, and category labels in both views.
-
-```ts
-export const BORDER_COLOR: Record<NodeCategory, string>        // node card ring
-export const CATEGORY_LABEL: Record<NodeCategory, string>      // text colour label
-export const CATEGORY_LEFT_BORDER: Record<NodeCategory, string> // story card accent
-```
-
-**Node categories and their colours:**
-
-| Category | Border | Used for |
-|----------|--------|----------|
-| `hotline` | yellow-400 | Initial call, SCR screening |
-| `cares` | green-400 | CARES supportive track |
-| `warning` | amber-400 | System traps / loop-back nodes |
-| `investigation` | red-400 | ACS investigation track |
-| `court` | red-700 | Article 10 court and all post-court nodes |
-| `neutral` | neutral-500 | Dead ends, case closed |
-
-To add a new category: add the value to `NodeCategory` in `types.ts`, then add an entry to each map in `categoryStyles.ts`.
+The following sections are written for researchers and content editors at The Bronx Defenders who need to update text or data without touching React code.
 
 ---
 
-## Data Files
+### Editing Story Text — `src/data/stories/maria.json`
 
-### `src/data/storyNodes.tsx` — System Graph
+This file controls everything a visitor reads during the scrollytelling experience.
 
-The single source of truth for the institutional flowchart. Exports:
+#### Top-level fields
 
-- `STORY_NODES` (default) — `Record<string, StoryNode>` — all 15 nodes
-- `EDGES` (named) — `Edge[]` — all 15 directed connections
+```jsonc
+{
+  "id": "maria",
+  "title": "Maria's Story",
 
-**`StoryNode` schema:**
+  "character": {
+    "name": "Maria",
+    "summary": "Maria is a single mother of two in the South Bronx..."
+  },
 
-```ts
-interface StoryNode {
-  id:          string;          // unique key — must match the object key
-  title:       string;          // headline shown in both views
-  description: string;          // system-level explanation (not character-specific)
-  icon:        ReactElement;    // lucide-react icon
-  x:           number;          // canvas center x (px)
-  y:           number;          // canvas center y (px)
-  category:    NodeCategory;    // controls colour in both views
-  statistics?: NodeStatistic[]; // optional visual stat components (see statistics.tsx)
-  choices:     Choice[];        // forward edges; empty = terminal node
+  "intro": {
+    "title": "A Call That Changes Everything",
+    "description": "In New York City, over 196,000 calls are made..."
+  },
+
+  "path": ["start", "scr_screening", "safety_assessment", ...],
+
+  "nodeContent": { ... },
+
+  "ending": {
+    "title": "The System Stays",
+    "description": "Maria's case is eventually closed...",
+    "actions": [
+      "Support The Bronx Defenders...",
+      "Advocate for direct financial support to families in poverty"
+    ]
+  }
 }
 ```
 
-**Canvas layout** (`6700 × 4500` px):
+#### `nodeContent` — story text per node
+
+Each key in `nodeContent` must match a node ID in `path[]`. The value is an object with a `blocks` array. Each block has a `type` that controls how it renders:
+
+| type | Required fields | Optional fields | Renders as |
+|------|----------------|-----------------|------------|
+| `text` | `body` | `title` | Paragraph, bold heading if `title` present |
+| `quote` | `text` | `attribution` | Italic blockquote with red left border |
+| `callout` | `text` | — | Amber-bordered callout box |
+| `image` | `src` | `caption`, `alt` | Full-width image with caption |
+
+**Example:**
+
+```json
+"nodeContent": {
+  "start": {
+    "blocks": [
+      {
+        "type": "text",
+        "title": "The Call",
+        "body": "On a Tuesday afternoon in October, a neighbor called the SCR hotline..."
+      },
+      {
+        "type": "callout",
+        "text": "Anonymous callers face no legal consequences for false reports."
+      },
+      {
+        "type": "quote",
+        "text": "I kept asking: what exactly did they say I did?",
+        "attribution": "Maria"
+      }
+    ]
+  }
+}
+```
+
+Nodes not present in `nodeContent` will still appear in the story — they'll show the system description from `nodes.json` instead of personal text.
+
+---
+
+### Editing Statistics — `src/data/config/statistics.json`
+
+This file contains all 21 statistical visualizations as pure JSON. Each entry has:
+
+```jsonc
+{
+  "stat-id": {
+    "id": "stat-id",
+    "nodeId": "which_node_this_belongs_to",
+    "sources": [
+      { "label": "NYC ACS Annual Report 2023" },
+      { "label": "OCFS Data", "url": "https://..." }
+    ],
+    "chart": {
+      "type": "big-number",
+      // ... chart-specific fields
+    }
+  }
+}
+```
+
+To change a number: find the stat by `id`, update the relevant field inside `chart`. See [Statistics Chart Types](#statistics-chart-types) for each type's field reference.
+
+To change a citation: update the `sources` array. `url` is optional.
+
+To reorder statistics within a node: reorder the `statisticIds` array in `nodes.json` for that node.
+
+---
+
+### Editing Nodes — `src/data/config/nodes.json`
+
+This file controls the flowchart structure.
+
+#### Node fields
+
+```jsonc
+{
+  "nodes": {
+    "node_id": {
+      "id": "node_id",
+      "x": 350,                        // canvas x position (0–6700)
+      "y": 2000,                       // canvas y position (0–4500)
+      "category": "hotline",           // controls border colour (see Node ID Reference)
+      "icon": "ShieldAlert",           // must be in iconRegistry.ts (see Icon Registry)
+      "iconColor": "text-yellow-500",  // any Tailwind text-color class
+      "title": "Call to SCR Hotline",
+      "description": "System-level explanation shown in both views.",
+      "choices": [
+        { "text": "Button label text", "nextNodeId": "next_node_id" }
+      ],
+      "statisticIds": ["stat-id-1", "stat-id-2"]
+    }
+  },
+  "edges": [
+    { "from": "node_id", "to": "next_node_id" }
+  ]
+}
+```
+
+**Rules:**
+- Every `nextNodeId` in `choices` must have a matching `{ "from": ..., "to": ... }` in `edges`
+- `statisticIds` order controls the scroll order of stat phases in StoryPage
+- `x`/`y` are canvas coordinates — X spacing is ~650 px per column
+
+---
+
+## Statistics Chart Types
+
+All 14 chart types are documented below. Find the relevant `"type"` value in `statistics.json` to understand which fields you can edit.
+
+---
+
+### `big-number`
+
+A single oversized value, centered. Optional unit label, description paragraph, tag grid, and footer citation.
+
+**Used by:** `determination-record`, `court-marianna`, `removal-marginal-cases`
+
+```json
+{
+  "type": "big-number",
+  "label": "How Long an \"Indicated\" Finding Stays on Your Record",
+  "value": "28",
+  "unit": "years",
+  "accentColor": "red",
+  "description": "An \"indicated\" finding — requiring only \"some credible evidence\" — can remain on the State Central Register for up to 28 years.",
+  "tags": [
+    "Employment checks",
+    "Housing applications",
+    "Future custody cases",
+    "Professional licensing"
+  ],
+  "footer": "NY Social Services Law §422"
+}
+```
+
+| Field | Required | Description |
+|-------|----------|-------------|
+| `value` | ✅ | Main display value (string — e.g. `"28"`, `"3×"`, `"$107,200"`) |
+| `label` | ✅ | Section label shown in small caps above |
+| `accentColor` | ✅ | Value colour — see [AccentColor Reference](#accentcolor-reference) |
+| `unit` | — | Text below the value (e.g. `"years"`) |
+| `description` | — | Paragraph below the unit |
+| `tags` | — | Array of strings rendered as a 2-column grid of small cards |
+| `footer` | — | Small italic citation at the bottom |
+
+---
+
+### `two-counter`
+
+Two stacked numbers with a divider line. Primary is larger; secondary is smaller with muted text.
+
+**Used by:** `start-scr-counter`
+
+```json
+{
+  "type": "two-counter",
+  "label": "New York City, 2023",
+  "primary": {
+    "value": "95,590",
+    "description": "calls to the SCR hotline",
+    "accentColor": "neutral"
+  },
+  "secondary": {
+    "value": "22,120",
+    "description": "ever substantiated",
+    "qualifier": "(23.1%)",
+    "accentColor": "neutral"
+  },
+  "note": "Over 73,000 families were investigated and found to have done nothing wrong."
+}
+```
+
+| Field | Required | Description |
+|-------|----------|-------------|
+| `primary.value` | ✅ | Large number (top) |
+| `primary.description` | ✅ | Label below the primary value |
+| `primary.accentColor` | ✅ | Use `"neutral"` to render the primary value in white |
+| `secondary.value` | ✅ | Smaller number (bottom) |
+| `secondary.description` | ✅ | Label below the secondary value |
+| `secondary.qualifier` | — | Appended to description in lighter grey |
+| `note` | — | Italic note below a `border-t` divider |
+
+> **Tip:** `accentColor: "neutral"` renders the primary value in **white** — correct for large headline numbers.
+
+---
+
+### `pipeline`
+
+A horizontal funnel chart. Each stage is a bar whose width represents the percentage relative to the first stage (100%).
+
+**Used by:** `start-pipeline`
+
+```json
+{
+  "type": "pipeline",
+  "label": "From Call to Removal — NYC, 2023",
+  "stages": [
+    { "label": "SCR Hotline Calls",    "pct": 100, "color": "neutral", "note": "95,590" },
+    { "label": "Passed to Agencies",   "pct": 75,  "color": "neutral", "note": "75%"   },
+    { "label": "Formal Investigation", "pct": 53,  "color": "amber",   "note": "~53%"  },
+    { "label": "CARES Track",          "pct": 22,  "color": "amber",   "note": "22%"   },
+    { "label": "Indicated",            "pct": 17,  "color": "red",     "note": "~17%"  },
+    { "label": "Children Removed",     "pct": 8,   "color": "red",     "note": "~8%"   }
+  ]
+}
+```
+
+| Field | Required | Description |
+|-------|----------|-------------|
+| `stages[].label` | ✅ | Text label (shown inside bar if `pct ≥ 30`, otherwise after bar) |
+| `stages[].pct` | ✅ | 0–100; first stage should be 100 (the reference width) |
+| `stages[].color` | ✅ | AccentColor — controls bar fill colour |
+| `stages[].note` | ✅ | Annotation shown to the left (count or percentage) |
+
+---
+
+### `bar-compare`
+
+Vertical bars side by side. Each bar has a value label above and a name below.
+
+**Used by:** `scr-acceptance-rate`
+
+```json
+{
+  "type": "bar-compare",
+  "label": "SCR Call Acceptance Rate",
+  "bars": [
+    { "value": "75%", "label": "New York",     "heightPct": 100, "accentColor": "red"     },
+    { "value": "50%", "label": "National Avg.", "heightPct": 67,  "accentColor": "neutral" }
+  ],
+  "note": "New York passes 3 in 4 calls.\nMost states pass 1 in 2."
+}
+```
+
+| Field | Required | Description |
+|-------|----------|-------------|
+| `bars[].value` | ✅ | Display string above the bar (e.g. `"75%"`) |
+| `bars[].label` | ✅ | Name below the bar |
+| `bars[].heightPct` | ✅ | 0–100; tallest bar = 100, others proportional |
+| `bars[].accentColor` | ✅ | Bar fill and value text colour |
+| `note` | — | Centered text below the chart; use `\n` for line breaks |
+
+---
+
+### `card-compare`
+
+Two cards side by side. Has two variants controlled by `"variant"`.
+
+**Used by:** `scr-anonymous-tips` (stat), `court-geography` (district)
+
+#### Variant `"stat"` — two numbers
+
+```json
+{
+  "type": "card-compare",
+  "variant": "stat",
+  "label": "Substantiation Rate Comparison",
+  "left": {
+    "header": "Anonymous Tips",
+    "accentColor": "neutral",
+    "preValue": "1 in 24 cases",
+    "value": "6.7%",
+    "postValue": "substantiated"
+  },
+  "right": {
+    "header": "All Cases",
+    "accentColor": "red",
+    "preValue": "\u00a0",
+    "value": "22.5%",
+    "postValue": "substantiated"
+  },
+  "note": "Both families receive an investigator at the door."
+}
+```
+
+| Field | Required | Description |
+|-------|----------|-------------|
+| `left/right.header` | ✅ | Card header label |
+| `left/right.accentColor` | ✅ | Header background tint and value colour |
+| `left/right.value` | ✅ | Large central number |
+| `left/right.preValue` | — | Small text above the value |
+| `left/right.postValue` | — | Small text below the value |
+| `note` | — | Centered note below both cards |
+
+#### Variant `"district"` — key-value table
+
+```json
+{
+  "type": "card-compare",
+  "variant": "district",
+  "label": "FY 2023 — Geography of Intervention",
+  "left": {
+    "name": "Highbridge / Concourse",
+    "subtitle": "South Bronx",
+    "code": "District BX04",
+    "accentColor": "red",
+    "rows": [
+      { "key": "SCR Intakes",       "value": "1,462" },
+      { "key": "Article X Filings", "value": "149"   },
+      { "key": "Median Income",     "value": "$28K"  }
+    ]
+  },
+  "right": {
+    "name": "Park Slope",
+    "subtitle": "Brooklyn",
+    "code": "District BK06",
+    "accentColor": "neutral",
+    "rows": [
+      { "key": "SCR Intakes",       "value": "333"   },
+      { "key": "Article X Filings", "value": "14"    },
+      { "key": "Median Income",     "value": "$112K" }
+    ]
+  },
+  "note": "Same system. Opposite outcomes."
+}
+```
+
+---
+
+### `horizontal-bars`
+
+Horizontal progress bars stacked vertically. Each bar shows its label, percentage, and a filled track.
+
+**Used by:** `investigation-race-rates`
+
+```json
+{
+  "type": "horizontal-bars",
+  "label": "% of Children Investigated by ACS, 2021",
+  "bars": [
+    { "label": "Black children",  "pct": 44, "accentColor": "red"     },
+    { "label": "Latino children", "pct": 43, "accentColor": "amber"   },
+    { "label": "White children",  "pct": 19, "accentColor": "neutral" }
+  ],
+  "callout": "A Black child in NYC has nearly a **50% chance** of being investigated by age 18."
+}
+```
+
+| Field | Required | Description |
+|-------|----------|-------------|
+| `bars[].label` | ✅ | Row label (left) |
+| `bars[].pct` | ✅ | 0–100; controls bar fill width |
+| `bars[].accentColor` | ✅ | Bar fill and percentage value colour |
+| `callout` | — | Bold callout below the bars. Wrapping text in `**double asterisks**` renders it in red-400. |
+
+---
+
+### `stacked-bars`
+
+Each row has two segments side by side: a highlighted left segment and a neutral right segment.
+
+**Used by:** `determination-dragnet`
+
+```json
+{
+  "type": "stacked-bars",
+  "label": "FY 2023 — What Follows a Report",
+  "leftLabel": "indicated",
+  "rightLabel": "unsubstantiated",
+  "rows": [
+    { "label": "Black & Latino families", "leftPct": 18 },
+    { "label": "White families",          "leftPct": 24 },
+    { "label": "All families",            "leftPct": 23 }
+  ],
+  "note": "In FY 2023, 56.6% of all intakes were unsubstantiated."
+}
+```
+
+| Field | Required | Description |
+|-------|----------|-------------|
+| `leftLabel` | ✅ | Label for the red left segment (shown inside each bar) |
+| `rightLabel` | ✅ | Label for the grey right segment (shown inside each bar) |
+| `rows[].label` | ✅ | Row category label above the bar |
+| `rows[].leftPct` | ✅ | 0–100; left segment width; right = `100 - leftPct` |
+| `note` | — | Italic footnote below all rows |
+
+---
+
+### `quote-list`
+
+Stacked blockquotes with a red left border.
+
+**Used by:** `safety-investigator-quotes`
+
+```json
+{
+  "type": "quote-list",
+  "label": "Documented Investigator Tactics — Bronx Families",
+  "quotes": [
+    { "text": "\"I'm not going to stop coming.\"" },
+    { "text": "\"Why not, if you don't have anything to hide?\"" },
+    { "text": "\"We can do this the easy way or I can get a warrant.\"", "attribution": "ACS investigator" }
+  ],
+  "note": "Documented tactics reported by ACS-investigated families in the Bronx."
+}
+```
+
+| Field | Required | Description |
+|-------|----------|-------------|
+| `quotes[].text` | ✅ | The quote text (include quotation marks manually) |
+| `quotes[].attribution` | — | Shown as `— Attribution` below the quote |
+| `note` | — | Small italic footnote below all quotes |
+
+---
+
+### `highlight-callout`
+
+A large value in an accented bordered box, followed by a bullet list.
+
+**Used by:** `case-plan-coercion`
+
+```json
+{
+  "type": "highlight-callout",
+  "label": "The Reality of \"Voluntary\" Service Plans",
+  "highlight": {
+    "value": "9 in 10",
+    "description": "families report experiencing ACS \"voluntary\" agreements as coercive",
+    "accentColor": "amber"
+  },
+  "bullets": [
+    "Refusing services = evidence of non-cooperation",
+    "Non-cooperation = basis for court petition",
+    "Compliance extends monitoring, not ends it"
+  ],
+  "note": "\"Voluntary\" is a legal term, not an accurate description of how families experience these agreements. — Dettlaff et al., Child Welfare, 2020"
+}
+```
+
+| Field | Required | Description |
+|-------|----------|-------------|
+| `highlight.value` | ✅ | Large value inside the box |
+| `highlight.description` | ✅ | Description text inside the box |
+| `highlight.accentColor` | ✅ | Box border, background, and text colour |
+| `bullets` | ✅ | Array of bullet point strings |
+| `note` | — | Small italic footnote below the bullets |
+
+---
+
+### `grid-cards`
+
+A grid of small stat cards. Each card has a value and description. Optional info box below.
+
+**Used by:** `supervision-renewal`, `kinship-support-gap`, `group-home-outcomes`
+
+```json
+{
+  "type": "grid-cards",
+  "label": "After the Supervision Order",
+  "columns": 2,
+  "cardStyle": "colored",
+  "cards": [
+    { "value": "1 in 3",  "description": "supervision orders are renewed at least once", "accentColor": "red"   },
+    { "value": "monthly", "description": "ACS home visits required under supervision",   "accentColor": "amber" }
+  ],
+  "infoBox": {
+    "title": "Any of the following can trigger escalation:",
+    "bullets": [
+      "A new concern reported to the hotline",
+      "Missed service appointment",
+      "Housing or employment instability",
+      "Caseworker's subjective assessment"
+    ]
+  }
+}
+```
+
+| Field | Required | Description |
+|-------|----------|-------------|
+| `columns` | ✅ | `1`, `2`, or `3` — grid column count |
+| `cardStyle` | — | `"colored"` = accent-tinted card background and border; `"dark"` (default) = neutral card with accent value text |
+| `cards[].value` | ✅ | Stat value displayed large |
+| `cards[].description` | ✅ | Supporting label below the value |
+| `cards[].accentColor` | ✅ | Value text colour (and background tint if `cardStyle: "colored"`) |
+| `infoBox.title` | — | Bold title for an optional info box below the grid |
+| `infoBox.bullets` | — | Bullet list items in the info box |
+
+---
+
+### `cost-compare`
+
+Two cost items separated by a `vs.` divider.
+
+**Used by:** `removal-cost`
+
+```json
+{
+  "type": "cost-compare",
+  "label": "Annual Cost Comparison",
+  "items": [
+    {
+      "description": "To separate a child from their family",
+      "value": "$107,200",
+      "note": "per child · per year · 2024",
+      "accentColor": "red"
+    },
+    {
+      "description": "To keep Eline's family together",
+      "value": "$3,600",
+      "note": "per year ($300/month housing subsidy)",
+      "accentColor": "neutral"
+    }
+  ],
+  "conclusion": "The system chose separation."
+}
+```
+
+| Field | Required | Description |
+|-------|----------|-------------|
+| `items[].description` | ✅ | Caption above the value |
+| `items[].value` | ✅ | Cost value (large display) |
+| `items[].accentColor` | ✅ | Value colour |
+| `items[].note` | — | Small note below the value |
+| `conclusion` | — | Centered text below the `vs.` divider |
+
+---
+
+### `timeline-bar`
+
+A large headline number followed by proportional horizontal segment bars.
+
+**Used by:** `court-duration`
+
+```json
+{
+  "type": "timeline-bar",
+  "label": "How Long a Family Court Case Takes",
+  "headline": {
+    "value": "18",
+    "unit": "months average",
+    "accentColor": "red"
+  },
+  "segments": [
+    { "label": "Initial hearing",      "widthPct": 8,  "accentColor": "neutral" },
+    { "label": "Investigation period", "widthPct": 15, "accentColor": "amber"   },
+    { "label": "Service compliance",   "widthPct": 30, "accentColor": "orange"  },
+    { "label": "Follow-up hearings",   "widthPct": 47, "accentColor": "red"     }
+  ],
+  "note": "Each hearing lasts ~30 minutes. The case lasts months to years."
+}
+```
+
+| Field | Required | Description |
+|-------|----------|-------------|
+| `headline.value` | ✅ | Large number |
+| `headline.unit` | ✅ | Text below the number |
+| `headline.accentColor` | ✅ | Headline number colour |
+| `segments[].label` | ✅ | Phase label shown to the left of the bar |
+| `segments[].widthPct` | ✅ | 0–100; all segments should sum to ~100 |
+| `segments[].accentColor` | ✅ | Bar fill colour |
+| `note` | — | Small italic footnote below all segments |
+
+---
+
+### `line-chart`
+
+An SVG area/line chart. Accepts actual data values (years and counts/percentages) — the renderer normalizes them automatically to SVG coordinates.
+
+**Used by:** `scr-case-volume`, `cares-trend`
+
+```json
+{
+  "type": "line-chart",
+  "label": "ACS Case Volume, 2004–2023",
+  "xAxis": { "type": "year", "min": 2004, "max": 2023 },
+  "yAxis": { "min": 0, "max": 110000, "format": "number" },
+  "series": [
+    {
+      "id": "acs-cases",
+      "label": "ACS Cases",
+      "accentColor": "red",
+      "dashed": false,
+      "areaFill": true,
+      "points": [
+        { "x": 2004, "y": 72000 },
+        { "x": 2015, "y": 108000 },
+        { "x": 2023, "y": 54000 }
+      ]
+    }
+  ],
+  "annotations": [
+    { "x": 2020, "spanYears": 1, "label": "COVID" }
+  ],
+  "note": "Cases fell when children were home and out of sight of mandated reporters.",
+  "callout": {
+    "text": "Reform in name. The pipeline remains.",
+    "subtext": "\"CARES may function as another surveillance program.\" — The Bronx Defenders"
+  }
+}
+```
+
+| Field | Required | Description |
+|-------|----------|-------------|
+| `xAxis.min` / `xAxis.max` | ✅ | Actual x-axis domain (e.g. `2004`, `2023`) |
+| `xAxis.type` | ✅ | `"year"` or `"number"` — affects label display |
+| `yAxis.min` / `yAxis.max` | ✅ | Actual y-axis domain (e.g. `0`, `110000`) |
+| `yAxis.format` | ✅ | `"number"` (uses `toLocaleString`) or `"percent"` (appends `%`) |
+| `series[].id` | ✅ | Unique series identifier |
+| `series[].label` | ✅ | Legend label (shown when 2+ series) |
+| `series[].accentColor` | ✅ | Line and area fill colour |
+| `series[].dashed` | ✅ | `true` = dashed stroke |
+| `series[].areaFill` | ✅ | `true` = gradient fill below the line |
+| `series[].points` | ✅ | Array of `{ "x": actual_value, "y": actual_value }` |
+| `annotations[]` | — | Vertical highlight bands (e.g. COVID period) |
+| `annotations[].x` | — | Start x-value of the band |
+| `annotations[].spanYears` | — | Width of the band in x-axis units |
+| `annotations[].label` | — | Label above the band |
+| `note` | — | Italic note below the chart |
+| `callout.text` | — | Bold tagline below the chart |
+| `callout.subtext` | — | Quoted note below the tagline (with top border) |
+
+> **Auto-endpoint label:** For single-series charts, the renderer automatically annotates the last data point with its formatted Y value (e.g. `"22%"`). This requires no configuration.
+
+---
+
+### `component` (Escape Hatch)
+
+Renders a fully custom React component. Use this when the visual is too bespoke for any declarative chart type.
+
+**Used by:** `safety-warrant-rate` (WarrantBox), `group-home-placement-instability` (PlacementInstability)
+
+```json
+{
+  "type": "component",
+  "componentId": "WarrantBox",
+  "data": {
+    "label": "ACS Home Entries Per Year",
+    "total": "~56,400",
+    "totalLabel": "ACS home entries",
+    "highlight": "94 warrants",
+    "warrantRate": "<0.2%"
+  }
+}
+```
+
+| Field | Required | Description |
+|-------|----------|-------------|
+| `componentId` | ✅ | Must match a key in `src/components/charts/customRegistry.ts` |
+| `data` | ✅ | Props passed to the component as `{ data }`. Each component defines its own data schema. |
+
+---
+
+## Developer Guides
+
+### Add a New Statistic
+
+**Case A — use an existing chart type:**
+
+1. Open `src/data/config/statistics.json`.
+2. Add a new entry with a unique `id`:
+   ```json
+   "new-stat-id": {
+     "id": "new-stat-id",
+     "nodeId": "target_node",
+     "sources": [{ "label": "Your source here" }],
+     "chart": { "type": "big-number", ... }
+   }
+   ```
+3. Open `src/data/config/nodes.json` and add `"new-stat-id"` to the `statisticIds` array of the target node.
+
+**Case B — need a custom component (escape hatch):**
+
+1. Create `src/components/charts/custom/YourChart.tsx`. The component must accept `{ data: Record<string, unknown> }`:
+   ```tsx
+   interface YourChartData { value?: string; /* ... */ }
+   export default function YourChart({ data }: { data: Record<string, unknown> }) {
+     const d = data as YourChartData;
+     return <div>{ d.value }</div>;
+   }
+   ```
+2. Register it in `src/components/charts/customRegistry.ts`:
+   ```ts
+   import YourChart from './custom/YourChart';
+   export const CUSTOM_CHART_REGISTRY = { ..., YourChart };
+   ```
+3. Add the entry to `statistics.json` with `"type": "component"` and `"componentId": "YourChart"`.
+4. Add the ID to the relevant node's `statisticIds` in `nodes.json`.
+
+---
+
+### Add a New Story Character
+
+1. Copy `src/data/stories/maria.json` to `src/data/stories/[name].json`.
+2. Change `"id"`, `"character"`, `"intro"`, `"ending"`.
+3. Set `"path"` to an ordered list of node IDs (see [Node ID Reference](#node-id-reference)).
+4. Add a `"nodeContent"` entry for each node in the path.
+5. In `src/App.tsx`, import the new JSON and pass it to `<StoryPage>`:
+   ```tsx
+   import type { StoryConfig } from './types';
+   import joseJson from './data/stories/jose.json';
+   const JOSE_STORY = joseJson as StoryConfig;
+   // then: <StoryPage storyConfig={JOSE_STORY} ... />
+   ```
+
+---
+
+### Add or Edit a Flowchart Node
+
+**Edit** — open `src/data/config/nodes.json`, find the node by key, change any field. Changing `x`/`y` repositions it on the canvas.
+
+**Add a new node:**
+
+1. Add the node entry to `"nodes"` in `nodes.json`.
+2. Add edges to `"edges"` connecting it to adjacent nodes.
+3. Add `choices` entries in existing nodes that should link to it.
+4. If needed, add statistics in `statistics.json` and reference them in `statisticIds`.
+
+**Remove a node:**
+
+1. Delete the entry from `"nodes"`.
+2. Remove all edges where `"from"` or `"to"` equals the deleted ID.
+3. Remove any `choices` referencing the deleted ID in other nodes.
+4. Remove it from `"path"` in any story JSON files.
+
+**Canvas layout reference** (`6700 × 4500` px):
 
 ```
 y ≈ 600–900   Better-outcome branches (screened out, CARES, unsubstantiated)
-y ≈ 1100      Supervision endpoint (Maria's story ends here)
-y ≈ 2000      Main horizontal spine (hotline → screening → assessment → investigation → court)
+y ≈ 1100      Supervision order endpoint
+y ≈ 2000      Main horizontal spine (hotline → court)
 y ≈ 2950–3550 Removal branches (foster care, kinship, group home)
+X spacing: ~650 px per depth column
 ```
-
-X spacing is ~650 px per depth column. Node cards are 260–320 px wide.
-
-**`EDGES`:**
-
-```ts
-export const EDGES: Edge[] = [
-  { from: 'start', to: 'scr_screening' },
-  // ...
-];
-```
-
-> **Keep in sync:** every `nextNodeId` in a `choices` array must also appear as an edge in `EDGES`. The EDGES array is used to draw the SVG bezier curves and to compute reverse traversal in `MapView`.
 
 ---
 
-### `src/data/statistics.tsx` — Visual Statistics
+### Add a New Chart Type (Escape Hatch)
 
-React components that visualise system data. Each component is assigned to a node via the `statistics` field in `storyNodes.tsx`.
+If you need a chart type beyond the 14 built-in ones and a custom component isn't enough (e.g. you want it to be reusable), add it to the declarative schema:
 
-**`NodeStatistic` schema:**
-
-```ts
-interface NodeStatistic {
-  id:        string;          // unique within its node
-  component: ReactElement;    // the visual component (chart, counter, etc.)
-  sources:   Source[];        // citation labels and optional URLs
-}
-```
-
-In `StoryPage`, each `NodeStatistic` becomes one scroll phase (one screen of content) after the node's story text. A node with 2 statistics produces 2 stat phases. In `MapView`, statistics are not shown.
-
-**Exported stat arrays** (assigned to nodes in `storyNodes.tsx`):
-
-| Export | Assigned to |
-|--------|-------------|
-| `START_STATISTICS` | `start` |
-| `SCR_SCREENING_STATISTICS` | `scr_screening` |
-| `SAFETY_ASSESSMENT_STATISTICS` | `safety_assessment` |
-| `CARES_TRACK_STATISTICS` | `cares_track` |
-| `INVESTIGATION_STATISTICS` | `investigation` |
-| `DETERMINATION_STATISTICS` | `determination` |
-| `CASE_PLAN_STATISTICS` | `case_plan` |
-| `COURT_FILING_STATISTICS` | `court_filing` |
-| `COURT_HEARING_STATISTICS` | `court_hearing` |
-| `SUPERVISION_ORDER_STATISTICS` | `supervision_order` |
-| `FOSTER_CARE_REMOVAL_STATISTICS` | `foster_care_removal` |
-| `KINSHIP_PLACEMENT_STATISTICS` | `kinship_placement` |
-| `GROUP_HOME_STATISTICS` | `group_home` |
+1. Add the interface to `src/types.ts` and add it to the `StatChartConfig` union.
+2. Create `src/components/charts/YourRenderer.tsx`.
+3. Import and add a `case 'your-type':` to `src/components/charts/StatRenderer.tsx`.
 
 ---
 
-### `src/data/mariaStory.ts` — Character Narrative Config
+### Add a New Icon
 
-Defines one character's journey. This file is JSON-serializable — no JSX, no React imports.
-
-**`StoryConfig` schema:**
-
-```ts
-interface StoryConfig {
-  id:          string;                              // unique story id (e.g. 'maria')
-  title:       string;                              // human-readable title
-  character: {
-    name:       string;                             // hero headline
-    summary:    string;                             // 1–2 sentence introduction
-    heroImage?: string;                             // optional portrait URL
-  };
-  intro: {
-    title:       string;                            // shown in the overview phase label
-    description: string;                            // shown below summary on hero screen
-  };
-  path:        string[];                            // ordered node IDs this character navigates
-  nodeContent: Record<string, { blocks: StoryContentBlock[] }>; // story text per node
-  ending?: {
-    title:       string;
-    description: string;
-    actions?:    string[];                          // optional call-to-action bullet list
-  };
-}
-```
-
-**`StoryContentBlock` union — content block types:**
-
-| Type | Fields | Renders as |
-|------|--------|------------|
-| `text` | `title?: string`, `body: string` | Paragraph with optional bold heading |
-| `quote` | `text: string`, `attribution?: string` | Italic pull-quote with red left border |
-| `callout` | `text: string` | Amber-bordered callout box |
-| `image` | `src: string`, `caption?: string`, `alt?: string` | Full-width image with caption |
+1. Find the icon name on [lucide.dev](https://lucide.dev).
+2. Open `src/config/iconRegistry.ts`.
+3. Add the import and add it to `ICON_REGISTRY`:
+   ```ts
+   import { ..., YourIcon } from 'lucide-react';
+   export const ICON_REGISTRY = { ..., YourIcon };
+   ```
+4. In `nodes.json`, set `"icon": "YourIcon"` on the relevant node.
 
 ---
 
-## How-To Guides
+### Tune the Scroll Experience
 
-### Create a new story
-
-1. Copy `src/data/mariaStory.ts` to `src/data/[name]Story.ts`.
-2. Change `id` to a unique string (e.g. `'jose'`).
-3. Update `character`, `intro`, and `ending`.
-4. Set `path[]` to an ordered list of node IDs from `storyNodes.tsx`.
-   Valid IDs: `start`, `scr_screening`, `screened_out`, `safety_assessment`, `cares_track`, `investigation`, `determination`, `unsubstantiated`, `case_plan`, `court_filing`, `court_hearing`, `supervision_order`, `foster_care_removal`, `kinship_placement`, `group_home`.
-5. Add a `nodeContent[nodeId]` entry for each node in your path. Nodes without an entry will show only the system description.
-6. In `App.tsx`, import the new config and pass it to `<StoryPage storyConfig={...} />`.
-
-### Add or edit a statistic
-
-1. Open `src/data/statistics.tsx`.
-2. Write a new React component (or edit an existing one).
-3. Add it to the relevant exported array (e.g. `INVESTIGATION_STATISTICS`).
-4. It will appear automatically as a scroll phase after the node's story text.
-
-Each entry in the array adds one full-screen stat phase. Order within the array = order of scroll phases.
-
-### Add a new node to the flowchart
-
-1. Add a new entry to `STORY_NODES` in `src/data/storyNodes.tsx` with a unique key and all required fields.
-2. Assign `x`/`y` coordinates that fit the canvas layout (see grid above).
-3. Choose a `category` — add a new category to `types.ts` and `categoryStyles.ts` if needed.
-4. Add edges to `EDGES` connecting the new node to existing ones.
-5. Add a `choices` entry in the node(s) that should link to it.
-6. Optionally attach statistics via the `statistics` field.
-
-### Edit or remove an existing node
-
-**Edit:** Find the node by key in `STORY_NODES`. Change `title`, `description`, `choices`, or any other field freely. Changing `x`/`y` repositions it on the canvas.
-
-**Remove:**
-1. Delete the entry from `STORY_NODES`.
-2. Remove all `EDGES` entries where `from` or `to` equals the deleted ID.
-3. Remove any `choices` entries in other nodes that reference the deleted ID.
-4. Remove it from any `path[]` in story config files.
-
-### Tune the scroll experience
-
-All scroll pacing, camera zoom levels, overlay opacity, and layout geometry are controlled by `SCROLL_CONFIG` at the top of `src/components/StoryPage.tsx`. Change a value and the dev server hot-reloads instantly.
+All scroll pacing, camera zoom levels, overlay opacity, and layout geometry are controlled by `SCROLL_CONFIG` at the top of `src/components/StoryPage.tsx`.
 
 ```ts
 const SCROLL_CONFIG = {
   phaseHeights: {
-    hero:     1.5,   // × viewport height per phase — larger = slower scroll feel
+    hero:     1.5,   // × viewport height — larger = slower scroll feel
     overview: 1.0,
     focus:    1.0,
     story:    1.2,
@@ -315,12 +982,12 @@ const SCROLL_CONFIG = {
     ending:   1.2,
   },
   cam: {
-    overviewFit: 0.88,  // fraction of viewport filled in overview
-    focusScale:  0.48,  // canvas scale when zoomed to a node (focus phase)
-    storyScale:  0.60,  // canvas scale when the story card is visible
+    overviewFit: 0.88,  // fraction of viewport filled in overview zoom
+    focusScale:  0.48,  // canvas scale when zoomed to a node
+    storyScale:  0.60,  // canvas scale when story card is visible
   },
   overlay: {
-    hero:       0.92,   // dark overlay opacity per phase (0 = transparent, 1 = black)
+    hero:       0.92,   // dark overlay opacity (0 = transparent, 1 = black)
     overview:   0.06,
     focusStart: 0.12,
     focusEnd:   0.55,
@@ -336,31 +1003,111 @@ const SCROLL_CONFIG = {
   },
   layout: {
     cardMaxPx:         540,   // max story card width (px)
-    cardFraction:      0.46,  // story card width as fraction of viewport width
-    cardStatLeftFrac:  0.03,  // card left edge position when stat panel is visible
-    statPanelLeftFrac: 0.50,  // stat panel left edge position
-    // ...
+    cardFraction:      0.46,  // story card width as fraction of viewport
+    cardStatLeftFrac:  0.03,  // card left edge when stat panel is visible
+    statPanelLeftFrac: 0.50,  // stat panel left edge
   },
   statAnim: {
     enterZone:     0.25,  // first 25% of stat phase = entrance (slide up + fade in)
     exitZone:      0.75,  // last 25% of stat phase = exit (slide further up + fade out)
-    enterOffsetPx: 64,    // starting translateY offset (px below resting position)
-    exitOffsetPx:  32,    // ending translateY offset (px above resting position)
+    enterOffsetPx: 64,    // starting translateY offset (px below resting)
+    exitOffsetPx:  32,    // ending translateY offset (px above resting)
   },
 }
 ```
 
 ---
 
-## Types Reference (`src/types.ts`)
+## Reference Tables
+
+### Icon Registry
+
+All valid values for the `"icon"` field in `nodes.json`:
+
+| `"icon"` value | Visual | Used on node |
+|----------------|--------|-------------|
+| `"ShieldAlert"` | Shield with exclamation | `start` |
+| `"Search"` | Magnifying glass | `scr_screening` |
+| `"XCircle"` | Circle with X | `screened_out` |
+| `"Shield"` | Plain shield | `safety_assessment` |
+| `"Handshake"` | Handshake | `cares_track` |
+| `"EyeOff"` | Eye with slash | `investigation` |
+| `"Scale"` | Justice scales | `determination`, `court_hearing` |
+| `"CheckCircle2"` | Circle with checkmark | `unsubstantiated` |
+| `"ClipboardList"` | Clipboard with lines | `case_plan` |
+| `"FileCheck"` | File with checkmark | `court_filing` |
+| `"Home"` | House | `supervision_order` |
+| `"AlertTriangle"` | Triangle with exclamation | `foster_care_removal` |
+| `"Heart"` | Heart | `kinship_placement` |
+| `"Building2"` | Building | `group_home` |
+
+To add more icons, see [Add a New Icon](#add-a-new-icon).
+
+---
+
+### AccentColor Reference
+
+All valid values for any `accentColor` field:
+
+| Value | Text class | BG class | Typical use |
+|-------|-----------|----------|-------------|
+| `"red"` | `text-red-400` | `bg-red-500` | Main alert, data highlights, removal |
+| `"amber"` | `text-amber-400` | `bg-amber-500` | Secondary alert, CARES track |
+| `"orange"` | `text-orange-400` | `bg-orange-500` | Mid-process, service compliance |
+| `"green"` | `text-green-400` | `bg-green-500` | Positive outcomes (rare) |
+| `"blue"` | `text-blue-400` | `bg-blue-500` | Neutral information |
+| `"pink"` | `text-pink-400` | `bg-pink-500` | Kinship / family care |
+| `"neutral"` | `text-neutral-400` | `bg-neutral-500` | Secondary data, control group |
+
+> **Special case:** In `two-counter`, setting `primary.accentColor: "neutral"` renders the primary value in **white** (`text-white`), not grey. Use this for large headline numbers.
+
+---
+
+### Node ID Reference
+
+All valid node IDs for use in `"path"`, `"nextNodeId"`, and `"statisticIds"`:
+
+| Node ID | Title | Category |
+|---------|-------|----------|
+| `start` | Call to SCR Hotline | `hotline` |
+| `scr_screening` | SCR Screening | `hotline` |
+| `screened_out` | Call Screened Out | `neutral` |
+| `safety_assessment` | Safety Assessment | `investigation` |
+| `cares_track` | CARES Track | `cares` |
+| `investigation` | ACS Investigation | `investigation` |
+| `determination` | Determination | `investigation` |
+| `unsubstantiated` | Case Unsubstantiated | `neutral` |
+| `case_plan` | Case Plan | `warning` |
+| `court_filing` | Article 10 Filing | `court` |
+| `court_hearing` | Court Hearing | `court` |
+| `supervision_order` | Supervision Order | `court` |
+| `foster_care_removal` | Foster Care Removal | `court` |
+| `kinship_placement` | Kinship Placement | `court` |
+| `group_home` | Group Home / Congregate Care | `court` |
+
+---
+
+## Types Reference
+
+All interfaces live in `src/types.ts`. Key types:
 
 ```ts
+// Flowchart
 type NodeCategory = 'hotline' | 'cares' | 'warning' | 'investigation' | 'court' | 'neutral'
-
-interface StoryNode      // one node in the system flowchart
+interface StoryNode      // runtime node (icon resolved to ReactElement)
+interface NodeConfigEntry // JSON-serializable node (icon as string)
+interface NodesFile      // { nodes: Record<string, NodeConfigEntry>, edges: Edge[] }
 interface Edge           // { from: string; to: string }
-interface NodeStatistic  // { id, component, sources[] }
-interface StoryConfig    // one character's full narrative configuration
+
+// Statistics
+type AccentColor = 'red' | 'amber' | 'orange' | 'green' | 'blue' | 'pink' | 'neutral'
+interface StatEntry      // one entry in statistics.json: { id, nodeId, sources, chart }
+type StatisticsConfig    // Record<string, StatEntry>
+type StatChartConfig     // union of all 14 chart type interfaces
+interface NodeStatistic  // runtime stat: { id, component: ReactElement, sources }
+
+// Story
+interface StoryConfig    // one character's full narrative (path + nodeContent + ending)
 type StoryContentBlock   // text | quote | callout | image
 ```
 
@@ -368,8 +1115,9 @@ type StoryContentBlock   // text | quote | callout | image
 
 ## Roadmap
 
-- **Headless CMS** — Move `STORY_NODES` and story configs to Sanity / Contentful so researchers can update copy without touching code.
-- **Analytics** — PostHog / Mixpanel event tracking on node selection and path completion.
-- **Shareable URLs** — Encode `history` as a query parameter for path replay.
-- **Accessibility** — `aria-label`, keyboard navigation (arrow keys on graph), focus management.
+- **Headless CMS** — Move `nodes.json`, `statistics.json`, and story JSON to Sanity / Contentful so researchers can update copy through a web interface without touching files.
+- **Analytics** — PostHog / Mixpanel event tracking on node selection and path completion rate.
+- **Shareable URLs** — Encode visited `path` as a query parameter for path replay and sharing.
+- **Accessibility** — `aria-label`, keyboard navigation (arrow keys on graph), focus management for stat panels.
 - **Mobile map pan** — Touch-drag pan for the overview map in `MapView`.
+- **Additional stories** — New character JSON files (José, Eline) following the same `StoryConfig` schema.
