@@ -10,24 +10,27 @@ An interactive scrollytelling experience built in partnership with **The Bronx D
 2. [Tech Stack](#tech-stack)
 3. [Project Structure](#project-structure)
 4. [Architecture Overview](#architecture-overview)
-5. [Editing Content Without Code](#editing-content-without-code)
+5. [Visual Builder UIs](#visual-builder-uis)
+   - [Story Builder](#story-builder)
+   - [Graph Editor](#graph-editor)
+6. [Editing Content Without Code](#editing-content-without-code)
    - [Editing Story Text](#editing-story-text-srcdatastoriesmariajson)
    - [Editing Statistics](#editing-statistics-srcdataconfigstatisticsjson)
    - [Editing Nodes](#editing-nodes-srcdataconfignodesjson)
-6. [Statistics Chart Types](#statistics-chart-types)
-7. [Developer Guides](#developer-guides)
+7. [Statistics Chart Types](#statistics-chart-types)
+8. [Developer Guides](#developer-guides)
    - [Add a New Statistic](#add-a-new-statistic)
    - [Add a New Story Character](#add-a-new-story-character)
    - [Add or Edit a Flowchart Node](#add-or-edit-a-flowchart-node)
    - [Add a New Chart Type (Escape Hatch)](#add-a-new-chart-type-escape-hatch)
    - [Add a New Icon](#add-a-new-icon)
    - [Tune the Scroll Experience](#tune-the-scroll-experience)
-8. [Reference Tables](#reference-tables)
+9. [Reference Tables](#reference-tables)
    - [Icon Registry](#icon-registry)
    - [AccentColor Reference](#accentcolor-reference)
    - [Node ID Reference](#node-id-reference)
-9. [Types Reference](#types-reference)
-10. [Roadmap](#roadmap)
+10. [Types Reference](#types-reference)
+11. [Roadmap](#roadmap)
 
 ---
 
@@ -93,15 +96,22 @@ src/
 └── components/
     ├── StoryPage.tsx              Scroll-driven narrative experience (primary view)
     ├── MapView.tsx                Free-explore map: zoom/pan + expand hidden nodes
-    ├── builder/                   Visual story editor (StoryBuilder UI)
+    ├── builder/                   Story narrative editor (StoryBuilder UI)
     │   ├── StoryBuilder.tsx
     │   ├── BlockEditor.tsx
     │   ├── MetadataEditor.tsx
     │   ├── NodeEditor.tsx
     │   ├── PathBuilder.tsx
     │   ├── PreviewPane.tsx
-    │   ├── StatsLibrary.tsx
-    │   └── MapEditorModal.tsx
+    │   └── StatsLibrary.tsx
+    ├── graph-editor/              Visual graph + statistics editor (GraphEditor UI)
+    │   ├── GraphEditor.tsx        Shell: state, download, layout
+    │   ├── FlowCanvas.tsx         Pan/zoom canvas with drag-to-reposition nodes
+    │   ├── EdgeLayer.tsx          SVG bezier edges + click-to-insert hit areas
+    │   ├── NodeInspector.tsx      Right panel: node fields, choices, statistics
+    │   ├── StatisticsEditor.tsx   Stat list with reorder/delete
+    │   ├── StatForm.tsx           Split-panel form + live chart preview modal
+    │   └── StatFormFields/        Per-chart-type form field components (13 types)
     └── charts/
         ├── StatRenderer.tsx       Dispatch: chart.type → correct renderer component
         ├── accentMap.ts           AccentColor token → Tailwind class lookup tables
@@ -141,13 +151,15 @@ src/
 
 ## Architecture Overview
 
-### Two views
+### Four views
 
-`App.tsx` holds a single `currentView: 'story' | 'map'` state.
+`App.tsx` holds a single `currentView: 'story' | 'map' | 'builder' | 'graph-editor'` state.
 
 ```
-'story'  →  <StoryPage storyConfig={MARIA_STORY} onExploreMap={...} />
-'map'    →  <MapView onBackToLanding={...} />
+'story'        →  <StoryPage storyConfig={MARIA_STORY} onExploreMap={...} />
+'map'          →  <MapView onBackToLanding={...} />
+'builder'      →  <StoryBuilder onExit={...} onOpenGraphEditor={...} />   (hidden, dev-only)
+'graph-editor' →  <GraphEditor onExit={...} />                            (hidden, dev-only)
 ```
 
 ### Three-layer data model
@@ -181,6 +193,104 @@ stories/maria.json ────────────────────�
                                              nodeContent → story card text
                                              character/intro/ending → screens
 ```
+
+---
+
+## Visual Builder UIs
+
+Two in-browser tools allow editing `nodes.json`, `statistics.json`, and `maria.json` without writing JSON by hand. They are hidden in production — access them from the dev server (`npm run dev`).
+
+### How to open
+
+| Tool | Access |
+|------|--------|
+| **Story Builder** | Triple-click the site title (top-left) on the story page |
+| **Graph Editor** | Open Story Builder → click **Graph Editor** in the top toolbar |
+
+Both open as full-screen overlays. Click **← Back** / **← Site** to return to the main experience.
+
+> Work is not saved between sessions. Use **↓ Download** regularly.
+
+---
+
+### Story Builder
+
+Edits the narrative story file (e.g. `maria.json`). Three-column workspace:
+
+| Panel | What it does |
+|-------|-------------|
+| **Left — Path** | Ordered list of nodes in the story. Add/remove/reorder via drag. Click any node to select it. |
+| **Centre — Node Editor** | Edit story blocks for the selected node: `text`, `quote`, `callout`, `image`. Add, remove, and reorder blocks inline. |
+| **Right — Stats Library** | Browse statistics attached to the current node and insert stat reference blocks. |
+
+**Top toolbar buttons:**
+
+| Button | Action |
+|--------|--------|
+| New | Start a blank story (prompts before discarding current work) |
+| Import | Load a `.json` file to resume editing |
+| ↓ Download | Download current story as `[id].json` |
+| ⎘ Copy | Copy JSON to clipboard |
+| Preview | Open a full read-only story preview |
+| Graph Editor | Switch to the Graph Editor |
+
+---
+
+### Graph Editor
+
+Edits `nodes.json` and `statistics.json` together. Left = canvas; right = inspector.
+
+#### Canvas interactions
+
+| Interaction | Effect |
+|------------|--------|
+| Click a node | Select it — opens the Node Inspector on the right |
+| Drag a node | Reposition it; x/y coordinates update live |
+| Scroll wheel | Zoom in/out (cursor-anchored) |
+| Drag canvas background | Pan |
+| **⊡ Reset View** button | Returns to auto-fit overview |
+| **+ Add Child** on a node card | Opens inline "Add Node" form with parent pre-filled |
+| Click the `+` midpoint badge on an edge | "Insert Node on Edge" — splices a new node between two existing ones |
+| **+ Connect →** in Inspector | Enter connect mode; click target node to add an edge |
+| **✕ Cancel Connect** in header | Exit connect mode without connecting |
+
+> **Constraint:** Hidden nodes may not connect outward to primary nodes. The editor will reject such an edge with an alert. This keeps the guarantee that primary nodes are only reachable from other primary nodes.
+
+#### Node Inspector (right panel)
+
+Five sections for the selected node:
+
+| Section | What you can edit |
+|---------|------------------|
+| Identity | Read the node ID; delete the node |
+| Basic fields | Title, description, category, icon (with live icon preview), icon color class, canvas X/Y |
+| Node Type | Toggle `primary` ↔ `hidden`; hidden nodes require a Parent Primary Node ID |
+| Outgoing Choices | Edit choice labels and target nodes; ✕ to remove a choice + its edge; `+ Add Choice` or `+ Connect →` |
+| Statistics | Reorder (↑↓), delete (✕), edit, or add new statistics for this node |
+
+#### Add Node form
+
+Appears in the right panel. Required: **Node ID** (lowercase letters, numbers, underscores) and **Title**. Optional fields are pre-filled from the parent node. Click **Add Node** to commit — the new node appears on the canvas immediately.
+
+#### Stat Form modal
+
+Opens centered when you click **Edit** on a stat or **+ Add Stat**:
+
+- **Left column** — Chart type selector + type-specific fields + sources list + Save/Cancel buttons
+- **Right column** — Live chart preview — updates on every keystroke. Shows _"Fill in required fields to see preview"_ if data is incomplete.
+
+Changing chart type resets all fields to a blank template. **Save** commits; **Cancel** or clicking the backdrop discards.
+
+#### Saving your work
+
+Click **↓ Download Both** in the header. Two files download:
+
+```
+nodes-YYYY-MM-DD.json
+statistics-YYYY-MM-DD.json
+```
+
+Replace `src/data/config/nodes.json` and `src/data/config/statistics.json` with these files to persist changes.
 
 ---
 

@@ -3,7 +3,9 @@
     "id": "start-scr-counter",
     "nodeId": "start",
     "sources": [
-      { "label": "NYC ACS Annual Report 2023" }
+      {
+        "label": "NYC ACS Annual Report 2023"
+      }
     ],
     "chart": {
       "type": "two-counter",
@@ -22,50 +24,95 @@
       "note": "Over 73,000 families were investigated and found to have done nothing wrong."
     }
   },
-
   "start-pipeline": {
     "id": "start-pipeline",
     "nodeId": "start",
     "sources": [
-      { "label": "NYC ACS Annual Report 2023" },
-      { "label": "OCFS Statewide Central Register Data" }
+      {
+        "label": "NYC ACS Annual Report 2023"
+      },
+      {
+        "label": "OCFS Statewide Central Register Data"
+      }
     ],
     "chart": {
       "type": "pipeline",
       "label": "From Call to Removal — NYC, 2023",
       "stages": [
-        { "label": "SCR Hotline Calls",    "pct": 100, "color": "neutral", "note": "95,590" },
-        { "label": "Passed to Agencies",   "pct": 75,  "color": "neutral", "note": "75%" },
-        { "label": "Formal Investigation", "pct": 53,  "color": "amber",   "note": "~53%" },
-        { "label": "CARES Track",          "pct": 22,  "color": "amber",   "note": "22%" },
-        { "label": "Indicated (Substantiated)", "pct": 17, "color": "red", "note": "~17%" },
-        { "label": "Children Removed",     "pct": 8,   "color": "red",     "note": "~8%" }
+        {
+          "label": "SCR Hotline Calls",
+          "pct": 100,
+          "color": "neutral",
+          "note": "95,590"
+        },
+        {
+          "label": "Passed to Agencies",
+          "pct": 75,
+          "color": "neutral",
+          "note": "75%"
+        },
+        {
+          "label": "Formal Investigation",
+          "pct": 53,
+          "color": "amber",
+          "note": "~53%"
+        },
+        {
+          "label": "CARES Track",
+          "pct": 22,
+          "color": "amber",
+          "note": "22%"
+        },
+        {
+          "label": "Indicated (Substantiated)",
+          "pct": 17,
+          "color": "red",
+          "note": "~17%"
+        },
+        {
+          "label": "Children Removed",
+          "pct": 8,
+          "color": "red",
+          "note": "~8%"
+        }
       ]
     }
   },
-
   "scr-acceptance-rate": {
     "id": "scr-acceptance-rate",
     "nodeId": "scr_screening",
     "sources": [
-      { "label": "Child Welfare Information Gateway, 2021" }
+      {
+        "label": "Child Welfare Information Gateway, 2021"
+      }
     ],
     "chart": {
       "type": "bar-compare",
       "label": "SCR Call Acceptance Rate",
       "bars": [
-        { "value": "75%", "label": "New York",     "heightPct": 100, "accentColor": "red" },
-        { "value": "50%", "label": "National Avg.", "heightPct": 67,  "accentColor": "neutral" }
+        {
+          "value": "75%",
+          "label": "New York",
+          "heightPct": 100,
+          "accentColor": "red"
+        },
+        {
+          "value": "50%",
+          "label": "National Avg.",
+          "heightPct": 67,
+          "accentColor": "neutral"
+        }
       ],
       "note": "New York passes 3 in 4 calls.\nMost states pass 1 in 2."
     }
   },
-
   "scr-anonymous-tips": {
     "id": "scr-anonymous-tips",
     "nodeId": "scr_screening",
     "sources": [
-      { "label": "NYC ACS Data Dashboard 2023" }
+      {
+        "label": "NYC ACS Data Dashboard 2023"
+      }
     ],
     "chart": {
       "type": "card-compare",
@@ -81,26 +128,37 @@
       "right": {
         "header": "All Cases",
         "accentColor": "red",
-        "preValue": "\u00a0",
+        "preValue": " ",
         "value": "22.5%",
         "postValue": "substantiated"
       },
       "note": "Both families receive an investigator at the door regardless of the source."
     }
   },
-
   "scr-case-volume": {
     "id": "scr-case-volume",
     "nodeId": "scr_screening",
     "sources": [
-      { "label": "NYC ACS Annual Reports 2004–2023" },
-      { "label": "OCFS CARES Data" }
+      {
+        "label": "NYC ACS Annual Reports 2004–2023"
+      },
+      {
+        "label": "OCFS CARES Data"
+      }
     ],
     "chart": {
       "type": "line-chart",
       "label": "ACS Case Volume, 2004–2023",
-      "xAxis": { "type": "year", "min": 2004, "max": 2023 },
-      "yAxis": { "min": 0, "max": 110000, "format": "number" },
+      "xAxis": {
+        "type": "year",
+        "min": 2004,
+        "max": 2023
+      },
+      "yAxis": {
+        "min": 0,
+        "max": 110000,
+        "format": "number"
+      },
       "series": [
         {
           "id": "acs-cases",
@@ -109,17 +167,50 @@
           "dashed": false,
           "areaFill": true,
           "points": [
-            { "x": 2004, "y": 72000 },
-            { "x": 2006, "y": 69000 },
-            { "x": 2008, "y": 65000 },
-            { "x": 2010, "y": 62000 },
-            { "x": 2013, "y": 91000 },
-            { "x": 2015, "y": 108000 },
-            { "x": 2017, "y": 82000 },
-            { "x": 2019, "y": 66000 },
-            { "x": 2021, "y": 59000 },
-            { "x": 2022, "y": 55000 },
-            { "x": 2023, "y": 54000 }
+            {
+              "x": 2004,
+              "y": 72000
+            },
+            {
+              "x": 2006,
+              "y": 69000
+            },
+            {
+              "x": 2008,
+              "y": 65000
+            },
+            {
+              "x": 2010,
+              "y": 62000
+            },
+            {
+              "x": 2013,
+              "y": 91000
+            },
+            {
+              "x": 2015,
+              "y": 108000
+            },
+            {
+              "x": 2017,
+              "y": 82000
+            },
+            {
+              "x": 2019,
+              "y": 66000
+            },
+            {
+              "x": 2021,
+              "y": 59000
+            },
+            {
+              "x": 2022,
+              "y": 55000
+            },
+            {
+              "x": 2023,
+              "y": 54000
+            }
           ]
         },
         {
@@ -129,28 +220,53 @@
           "dashed": true,
           "areaFill": false,
           "points": [
-            { "x": 2004, "y": 2000  },
-            { "x": 2008, "y": 5000  },
-            { "x": 2013, "y": 10000 },
-            { "x": 2018, "y": 14000 },
-            { "x": 2021, "y": 18000 },
-            { "x": 2023, "y": 22000 }
+            {
+              "x": 2004,
+              "y": 2000
+            },
+            {
+              "x": 2008,
+              "y": 5000
+            },
+            {
+              "x": 2013,
+              "y": 10000
+            },
+            {
+              "x": 2018,
+              "y": 14000
+            },
+            {
+              "x": 2021,
+              "y": 18000
+            },
+            {
+              "x": 2023,
+              "y": 22000
+            }
           ]
         }
       ],
       "annotations": [
-        { "x": 2020, "spanYears": 1, "label": "COVID" }
+        {
+          "x": 2020,
+          "spanYears": 1,
+          "label": "COVID"
+        }
       ],
       "note": "Cases fell when children were home and out of sight of mandated reporters. They rose again when schools reopened."
     }
   },
-
   "safety-warrant-rate": {
     "id": "safety-warrant-rate",
     "nodeId": "investigation",
     "sources": [
-      { "label": "NYC ACS records, 2010–2020" },
-      { "label": "Bronx Defenders client data" }
+      {
+        "label": "NYC ACS records, 2010–2020"
+      },
+      {
+        "label": "Bronx Defenders client data"
+      }
     ],
     "chart": {
       "type": "component",
@@ -164,56 +280,90 @@
       }
     }
   },
-
   "investigation-race-rates": {
     "id": "investigation-race-rates",
     "nodeId": "investigation",
     "sources": [
-      { "label": "Fong et al., 2021 / NYC ACS Data" },
-      { "label": "Center for the Study of Social Policy" }
+      {
+        "label": "Fong et al., 2021 / NYC ACS Data"
+      },
+      {
+        "label": "Center for the Study of Social Policy"
+      }
     ],
     "chart": {
       "type": "horizontal-bars",
       "label": "% of Children Investigated by ACS by Age 18 (2021)",
       "bars": [
-        { "label": "Black children",  "pct": 44, "accentColor": "red" },
-        { "label": "Latino children", "pct": 43, "accentColor": "amber" },
-        { "label": "White children",  "pct": 19, "accentColor": "neutral" }
+        {
+          "label": "Black children",
+          "pct": 44,
+          "accentColor": "red"
+        },
+        {
+          "label": "Latino children",
+          "pct": 43,
+          "accentColor": "amber"
+        },
+        {
+          "label": "White children",
+          "pct": 19,
+          "accentColor": "neutral"
+        }
       ],
       "callout": "A Black child in NYC has nearly a **50% chance** of being investigated by age 18."
     }
   },
-
   "safety-investigator-quotes": {
     "id": "safety-investigator-quotes",
     "nodeId": "investigation",
     "sources": [
-      { "label": "Bronx Defenders, This Wound Is Still Fresh, 2023" }
+      {
+        "label": "Bronx Defenders, This Wound Is Still Fresh, 2023"
+      }
     ],
     "chart": {
       "type": "quote-list",
       "label": "Documented Coercive Tactics",
       "quotes": [
-        { "text": "\"I'm not going to stop coming.\"" },
-        { "text": "\"Why not, if you don't have anything to hide?\"" },
-        { "text": "\"We can do this the easy way or I can get a warrant.\"", "attribution": "ACS investigator" }
+        {
+          "text": "\"I'm not going to stop coming.\""
+        },
+        {
+          "text": "\"Why not, if you don't have anything to hide?\""
+        },
+        {
+          "text": "\"We can do this the easy way or I can get a warrant.\"",
+          "attribution": "ACS investigator"
+        }
       ],
       "note": "Documented tactics reported by ACS-investigated families in the Bronx. Families have no right to counsel at this stage."
     }
   },
-
   "cares-trend": {
     "id": "cares-trend",
     "nodeId": "cares_track",
     "sources": [
-      { "label": "NYC ACS Annual Reports 2016–2024" },
-      { "label": "Bronx Defenders, This Wound Is Still Fresh, 2023" }
+      {
+        "label": "NYC ACS Annual Reports 2016–2024"
+      },
+      {
+        "label": "Bronx Defenders, This Wound Is Still Fresh, 2023"
+      }
     ],
     "chart": {
       "type": "line-chart",
       "label": "CARES Share of ACS Cases",
-      "xAxis": { "type": "year", "min": 2016, "max": 2024 },
-      "yAxis": { "min": 0, "max": 25, "format": "percent" },
+      "xAxis": {
+        "type": "year",
+        "min": 2016,
+        "max": 2024
+      },
+      "yAxis": {
+        "min": 0,
+        "max": 25,
+        "format": "percent"
+      },
       "series": [
         {
           "id": "cares-pct",
@@ -222,11 +372,26 @@
           "dashed": false,
           "areaFill": true,
           "points": [
-            { "x": 2016, "y": 4 },
-            { "x": 2018, "y": 8 },
-            { "x": 2020, "y": 13 },
-            { "x": 2022, "y": 18 },
-            { "x": 2024, "y": 22 }
+            {
+              "x": 2016,
+              "y": 4
+            },
+            {
+              "x": 2018,
+              "y": 8
+            },
+            {
+              "x": 2020,
+              "y": 13
+            },
+            {
+              "x": 2022,
+              "y": 18
+            },
+            {
+              "x": 2024,
+              "y": 22
+            }
           ]
         }
       ],
@@ -237,12 +402,13 @@
       }
     }
   },
-
   "determination-dragnet": {
     "id": "determination-dragnet",
     "nodeId": "determination",
     "sources": [
-      { "label": "NYC ACS Data Dashboard FY2023" }
+      {
+        "label": "NYC ACS Data Dashboard FY2023"
+      }
     ],
     "chart": {
       "type": "stacked-bars",
@@ -250,19 +416,29 @@
       "leftLabel": "Indicated",
       "rightLabel": "unsubstantiated",
       "rows": [
-        { "label": "Black & Latino families", "leftPct": 22 },
-        { "label": "White families",           "leftPct": 26 },
-        { "label": "All families",             "leftPct": 23.1 }
+        {
+          "label": "Black & Latino families",
+          "leftPct": 22
+        },
+        {
+          "label": "White families",
+          "leftPct": 26
+        },
+        {
+          "label": "All families",
+          "leftPct": 23.1
+        }
       ],
       "note": "In FY 2023, 56.6% of all intakes were entirely unsubstantiated, yet families endured the full investigation process."
     }
   },
-
   "determination-record": {
     "id": "determination-record",
     "nodeId": "determination",
     "sources": [
-      { "label": "NY Social Services Law §422" }
+      {
+        "label": "NY Social Services Law §422"
+      }
     ],
     "chart": {
       "type": "big-number",
@@ -279,13 +455,16 @@
       ]
     }
   },
-
   "case-plan-coercion": {
     "id": "case-plan-coercion",
     "nodeId": "case_plan",
     "sources": [
-      { "label": "Dettlaff et al., Child Welfare, 2020" },
-      { "label": "Movement for Family Power, 2020" }
+      {
+        "label": "Dettlaff et al., Child Welfare, 2020"
+      },
+      {
+        "label": "Movement for Family Power, 2020"
+      }
     ],
     "chart": {
       "type": "highlight-callout",
@@ -303,13 +482,16 @@
       "note": "\"Voluntary\" is a legal term, not an accurate description of how families experience these agreements. — Dettlaff et al., Child Welfare, 2020"
     }
   },
-
   "court-duration": {
     "id": "court-duration",
     "nodeId": "court_filing",
     "sources": [
-      { "label": "Bronx Defenders, 2023" },
-      { "label": "NYC Family Court caseload data" }
+      {
+        "label": "Bronx Defenders, 2023"
+      },
+      {
+        "label": "NYC Family Court caseload data"
+      }
     ],
     "chart": {
       "type": "timeline-bar",
@@ -320,20 +502,37 @@
         "accentColor": "red"
       },
       "segments": [
-        { "label": "Initial hearing",      "widthPct": 8,  "accentColor": "neutral" },
-        { "label": "Investigation period", "widthPct": 15, "accentColor": "amber" },
-        { "label": "Service compliance",   "widthPct": 30, "accentColor": "orange" },
-        { "label": "Follow-up hearings",   "widthPct": 47, "accentColor": "red" }
+        {
+          "label": "Initial hearing",
+          "widthPct": 8,
+          "accentColor": "neutral"
+        },
+        {
+          "label": "Investigation period",
+          "widthPct": 15,
+          "accentColor": "amber"
+        },
+        {
+          "label": "Service compliance",
+          "widthPct": 30,
+          "accentColor": "orange"
+        },
+        {
+          "label": "Follow-up hearings",
+          "widthPct": 47,
+          "accentColor": "red"
+        }
       ],
       "note": "Each hearing lasts ~30 minutes. The case lasts months to years."
     }
   },
-
   "court-geography": {
     "id": "court-geography",
     "nodeId": "court_hearing",
     "sources": [
-      { "label": "NYC ACS FY 2023 Data / US Census" }
+      {
+        "label": "NYC ACS FY 2023 Data / US Census"
+      }
     ],
     "chart": {
       "type": "card-compare",
@@ -345,9 +544,18 @@
         "code": "District BX04",
         "accentColor": "red",
         "rows": [
-          { "key": "SCR Intakes",       "value": "1,462" },
-          { "key": "Article X Filings", "value": "149" },
-          { "key": "Median Income",     "value": "$28K" }
+          {
+            "key": "SCR Intakes",
+            "value": "1,462"
+          },
+          {
+            "key": "Article X Filings",
+            "value": "149"
+          },
+          {
+            "key": "Median Income",
+            "value": "$28K"
+          }
         ]
       },
       "right": {
@@ -356,20 +564,30 @@
         "code": "District BK06",
         "accentColor": "neutral",
         "rows": [
-          { "key": "SCR Intakes",       "value": "333" },
-          { "key": "Article X Filings", "value": "14" },
-          { "key": "Median Income",     "value": "$112K" }
+          {
+            "key": "SCR Intakes",
+            "value": "333"
+          },
+          {
+            "key": "Article X Filings",
+            "value": "14"
+          },
+          {
+            "key": "Median Income",
+            "value": "$112K"
+          }
         ]
       },
       "note": "A map of structural disinvestment. Same system. Opposite outcomes."
     }
   },
-
   "court-marianna": {
     "id": "court-marianna",
     "nodeId": "court_hearing",
     "sources": [
-      { "label": "Bronx Defenders client documentation, 2022" }
+      {
+        "label": "Bronx Defenders client documentation, 2022"
+      }
     ],
     "chart": {
       "type": "big-number",
@@ -381,13 +599,16 @@
       "footer": "State-induced fear, documented by her attorney."
     }
   },
-
   "supervision-renewal": {
     "id": "supervision-renewal",
     "nodeId": "supervision_order",
     "sources": [
-      { "label": "Movement for Family Power, 2020" },
-      { "label": "NYC ACS case outcome data" }
+      {
+        "label": "Movement for Family Power, 2020"
+      },
+      {
+        "label": "NYC ACS case outcome data"
+      }
     ],
     "chart": {
       "type": "grid-cards",
@@ -417,12 +638,13 @@
       }
     }
   },
-
   "removal-cost": {
     "id": "removal-cost",
     "nodeId": "foster_care_removal",
     "sources": [
-      { "label": "NYC Comptroller / Housing Subsidy Data (2024)" }
+      {
+        "label": "NYC Comptroller / Housing Subsidy Data (2024)"
+      }
     ],
     "chart": {
       "type": "cost-compare",
@@ -444,13 +666,16 @@
       "conclusion": "The system chose separation."
     }
   },
-
   "removal-marginal-cases": {
     "id": "removal-marginal-cases",
     "nodeId": "foster_care_removal",
     "sources": [
-      { "label": "Doyle, Journal of Political Economy, 2007" },
-      { "label": "Annie E. Casey Foundation" }
+      {
+        "label": "Doyle, Journal of Political Economy, 2007"
+      },
+      {
+        "label": "Annie E. Casey Foundation"
+      }
     ],
     "chart": {
       "type": "big-number",
@@ -467,12 +692,13 @@
       "footer": "Researchers controlling for pre-existing conditions still find that placement itself causes harm — not just the circumstances that led to it."
     }
   },
-
   "kinship-support-gap": {
     "id": "kinship-support-gap",
     "nodeId": "kinship_placement",
     "sources": [
-      { "label": "Kinship Care Initiative Report, 2021" }
+      {
+        "label": "Kinship Care Initiative Report, 2021"
+      }
     ],
     "chart": {
       "type": "grid-cards",
@@ -499,13 +725,16 @@
       }
     }
   },
-
   "group-home-outcomes": {
     "id": "group-home-outcomes",
     "nodeId": "group_home",
     "sources": [
-      { "label": "Annie E. Casey Foundation, 2021" },
-      { "label": "Chapin Hall at the University of Chicago" }
+      {
+        "label": "Annie E. Casey Foundation, 2021"
+      },
+      {
+        "label": "Chapin Hall at the University of Chicago"
+      }
     ],
     "chart": {
       "type": "grid-cards",
@@ -536,13 +765,16 @@
       ]
     }
   },
-
   "group-home-placement-instability": {
     "id": "group-home-placement-instability",
     "nodeId": "group_home",
     "sources": [
-      { "label": "US DOJ Investigation into NYS OCFS, 2022" },
-      { "label": "Chapin Hall, Midwest Evaluation of the Adult Functioning of Former Foster Youth" }
+      {
+        "label": "US DOJ Investigation into NYS OCFS, 2022"
+      },
+      {
+        "label": "Chapin Hall, Midwest Evaluation of the Adult Functioning of Former Foster Youth"
+      }
     ],
     "chart": {
       "type": "component",
@@ -553,8 +785,14 @@
         "highlightLabel": "3+ moves",
         "headline": "1 in 4 foster children experiences 3 or more placement disruptions.",
         "metrics": [
-          { "value": "40,000", "label": "children in care (1999)" },
-          { "value": "<7,000", "label": "children in care (2024)" }
+          {
+            "value": "40,000",
+            "label": "children in care (1999)"
+          },
+          {
+            "value": "<7,000",
+            "label": "children in care (2024)"
+          }
         ],
         "note": "Progress in volume. No change in logic."
       }

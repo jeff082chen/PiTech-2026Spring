@@ -7,7 +7,6 @@ import PathBuilder     from './PathBuilder';
 import NodeEditor      from './NodeEditor';
 import StatsLibrary    from './StatsLibrary';
 import PreviewPane     from './PreviewPane';
-import MapEditorModal  from './MapEditorModal';
 
 const MARIA_STORY = mariaJson as StoryConfig;
 
@@ -23,14 +22,14 @@ const EMPTY_STORY: StoryConfig = {
 
 interface Props {
   onExit: () => void;
+  onOpenGraphEditor: () => void;
 }
 
-export default function StoryBuilder({ onExit }: Props) {
+export default function StoryBuilder({ onExit, onOpenGraphEditor }: Props) {
   const [story,          setStory]          = useState<StoryConfig>(MARIA_STORY);
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(story.path[0] ?? null);
-  const [showPreview,    setShowPreview]    = useState(false);
-  const [showMapEditor,  setShowMapEditor]  = useState(false);
-  const [copied,         setCopied]         = useState(false);
+  const [showPreview, setShowPreview] = useState(false);
+  const [copied,      setCopied]      = useState(false);
 
   const importRef = useRef<HTMLInputElement>(null);
 
@@ -135,8 +134,7 @@ export default function StoryBuilder({ onExit }: Props) {
     <div className="h-screen w-screen bg-neutral-950 text-neutral-200 flex flex-col overflow-hidden">
 
       {/* Modals */}
-      {showPreview   && <PreviewPane   story={story} onClose={() => setShowPreview(false)} />}
-      {showMapEditor && <MapEditorModal onClose={() => setShowMapEditor(false)} />}
+      {showPreview && <PreviewPane story={story} onClose={() => setShowPreview(false)} />}
 
       {/* Top bar */}
       <header className="shrink-0 flex items-center gap-3 px-4 py-3 border-b border-neutral-800 bg-neutral-950">
@@ -182,7 +180,7 @@ export default function StoryBuilder({ onExit }: Props) {
 
           <div className="w-px h-5 bg-neutral-800" />
 
-          <TopBtn onClick={() => setShowMapEditor(true)} label="Map Editor" />
+          <TopBtn onClick={onOpenGraphEditor} label="Graph Editor" />
           <TopBtn onClick={() => setShowPreview(true)}   label="Preview" />
         </div>
       </header>

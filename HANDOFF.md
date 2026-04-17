@@ -16,9 +16,10 @@
 6. [Statistics chart system](#6-statistics-chart-system)
 7. [The free-explore map (MapView)](#7-the-free-explore-map-mapview)
 8. [Shared config files](#8-shared-config-files)
-9. [Common editing tasks](#9-common-editing-tasks)
-10. [Key architectural decisions](#10-key-architectural-decisions)
-11. [Known issues & next steps](#11-known-issues--next-steps)
+9. [Visual builder UIs](#9-visual-builder-uis)
+10. [Common editing tasks](#10-common-editing-tasks)
+11. [Key architectural decisions](#11-key-architectural-decisions)
+12. [Known issues & next steps](#12-known-issues--next-steps)
 
 ---
 
@@ -50,7 +51,7 @@ The `VITE_BASE_URL` env var is read by `vite.config.ts` and sets the asset base 
 
 ```
 src/
-├── App.tsx                        Top-level view router — 'story' | 'map'
+├── App.tsx                        Top-level view router — 'story' | 'map' | 'builder' | 'graph-editor'
 ├── main.tsx                       React entry point
 ├── index.css                      Tailwind directives only
 ├── types.ts                       All shared TypeScript interfaces
@@ -71,7 +72,7 @@ src/
 └── components/
     ├── StoryPage.tsx              Scroll-driven narrative (primary view)
     ├── MapView.tsx                Free-explore map: zoom/pan + expand hidden nodes
-    ├── builder/                   Visual content editor (StoryBuilder UI)
+    ├── builder/                   Story narrative editor (StoryBuilder UI)
     │   ├── StoryBuilder.tsx       Top-level builder shell
     │   ├── BlockEditor.tsx        Story block editing panel
     │   ├── MetadataEditor.tsx     Character / intro / ending fields
@@ -79,7 +80,28 @@ src/
     │   ├── PathBuilder.tsx        Drag-and-drop path sequence
     │   ├── PreviewPane.tsx        Live story preview inside builder
     │   ├── StatsLibrary.tsx       Statistics selector sidebar
-    │   └── MapEditorModal.tsx     Node position editing on canvas
+    │   └── MapEditorModal.tsx     (legacy — superseded by GraphEditor)
+    ├── graph-editor/              Visual graph + statistics editor
+    │   ├── GraphEditor.tsx        Top-level shell (state, download, layout)
+    │   ├── FlowCanvas.tsx         Pan/zoom canvas: node render + drag + edge overlay
+    │   ├── EdgeLayer.tsx          SVG bezier edges with click-to-insert hit areas
+    │   ├── NodeInspector.tsx      Right panel: node fields, choices, statistics list
+    │   ├── StatisticsEditor.tsx   Stat list with reorder/delete; opens StatForm modal
+    │   ├── StatForm.tsx           Split-panel form: type-specific fields + live preview
+    │   └── StatFormFields/        One component per chart type
+    │       ├── BigNumberFields.tsx
+    │       ├── TwoCounterFields.tsx
+    │       ├── PipelineFields.tsx
+    │       ├── BarCompareFields.tsx
+    │       ├── CardCompareFields.tsx
+    │       ├── HorizontalBarsFields.tsx
+    │       ├── StackedBarsFields.tsx
+    │       ├── QuoteListFields.tsx
+    │       ├── HighlightCalloutFields.tsx
+    │       ├── GridCardsFields.tsx
+    │       ├── CostCompareFields.tsx
+    │       ├── TimelineBarFields.tsx
+    │       └── LineChartFields.tsx
     └── charts/
         ├── StatRenderer.tsx       Main dispatch: chart.type → renderer component
         ├── accentMap.ts           AccentColor token → Tailwind class maps
@@ -104,13 +126,17 @@ src/
 
 ### View routing
 
-`App.tsx` holds a single `currentView: 'story' | 'map'` state — no routing library needed.
+`App.tsx` holds a single `currentView: 'story' | 'map' | 'builder' | 'graph-editor'` state — no routing library needed.
 
 ```
 default            → <StoryPage storyConfig={MARIA_STORY} onExploreMap={...} />
 "Explore Full Map" → <MapView onBackToLanding={...} />
 "Home"             → back to StoryPage
+"Story Builder"*   → <StoryBuilder onExit={...} onOpenGraphEditor={...} />
+"Graph Editor"*    → <GraphEditor onExit={...} />
 ```
+
+*Hidden buttons — see §9 for how to access them.
 
 To add a story selector, add state to `App.tsx` and pass the chosen `StoryConfig` to `<StoryPage>`. No component changes needed.
 
@@ -939,7 +965,100 @@ export const CATEGORY_LEFT_BORDER: Record<NodeCategory, string>  // story card a
 
 ---
 
-## 9. Common editing tasks
+## 9. Visual builder UIs
+
+Both builder tools are accessed from the **live dev site** (not deployed) — they write only to in-memory state and output downloadable JSON files. Changes must be downloaded and committed to replace the source files.
+
+### Accessing the builders
+
+The buttons are hidden in production; access via the dev server:
+
+- **Story Builder** — triple-click the site title (top-left) on the story page.
+- **Graph Editor** — open Story Builder first, then click **Graph Editor** in the top toolbar. Alternatively, triple-click the title while holding `Shift` if wired in App.tsx.
+
+Both builders open as full-screen overlays. Click **← Back / ← Site** to return.
+
+---
+
+### Story Builder
+
+Edits `maria.json` (or any story config). Three-column layout:
+
+| Panel | Purpose |
+|-------|---------|
+| **Left — Path** | Ordered list of node IDs in the story. Drag to reorder; click to select. |
+| **Centre — Node Editor** | Story blocks for the selected node: add/edit/reorder `text`, `quote`, `callout`, `image` blocks. |
+| **Right — Stats Library** | Browse all statistics for the selected node; click to insert a stat reference block. |
+
+**Top toolbar:**
+- **New** — start a blank story (discards current; prompts confirmation)
+- **Import** — load a `.json` file to resume editing
+- **↓ Download** — download the current story as `[id].json`
+- **⎘ Copy** — copy JSON to clipboard
+- **Preview** — opens a full read-only preview of the story in a modal overlay
+
+> Work is not saved between browser sessions. Download regularly.
+
+---
+
+### Graph Editor
+
+Edits `nodes.json` and `statistics.json` together. Left side = pan/zoom canvas; right side = inspector panel.
+
+#### Canvas
+
+| Interaction | Effect |
+|------------|--------|
+| Click a node | Opens the Node Inspector on the right |
+| Drag a node | Repositions it; x/y coordinates update in real time |
+| Scroll wheel | Zoom in/out (cursor-anchored) |
+| Drag canvas background | Pan |
+| Click **⊡ Reset View** | Returns to auto-fit overview |
+| Click **+ Add Child** on a node | Opens the inline "Add Node" form with the parent pre-filled |
+| Click **+ Connect →** in Inspector | Enter connect mode — then click the target node to add an edge |
+| Click the midpoint `+` badge on an edge | Opens "Insert Node on Edge" form (splices a new node between two existing ones) |
+
+**Connect mode** shows a dashed preview line from the source node to the cursor. A blue "✕ Cancel Connect" button appears in the header to exit without connecting.
+
+**Constraint:** Hidden nodes may not connect to primary nodes — the UI will show an alert and cancel the operation. This preserves the rule that primary nodes are only reachable via other primary nodes.
+
+#### Node Inspector (right panel)
+
+Five sections for the selected node:
+
+1. **Identity** — node ID (read-only), Delete button
+2. **Basic fields** — title, description, category, icon (with live preview), icon color, canvas X/Y
+3. **Node Type** — toggle between `primary` and `hidden`; hidden nodes require a Parent Primary Node ID
+4. **Outgoing Choices** — edit choice labels and target nodes; ✕ removes the choice and its edge; `+ Add Choice` adds a blank; `+ Connect →` enters connect mode
+5. **Statistics** — list of attached stats with ↑/↓ reorder and ✕ delete; `+ Add Stat` opens the Stat Form modal
+
+#### Add Node form
+
+Appears in the right panel when "+ Add Child" or the edge midpoint is clicked. Required fields: **Node ID** (lowercase/underscore only) and **Title**. Optional: Category, Node Type, canvas X/Y (pre-filled from parent). Click **Add Node** to commit; the new node is immediately selectable on the canvas.
+
+#### Stat Form modal
+
+Opens centered over the canvas when editing or creating a statistic:
+
+- **Left** — scrollable form: chart type selector, type-specific fields, sources list
+- **Right** — live chart preview (auto-updates on every keystroke; shows "Fill in required fields to see preview" if the data is incomplete)
+
+Changing the chart type resets all fields to a blank template for that type. Click **Save** to commit, **Cancel** (or click the backdrop) to discard.
+
+#### Downloading
+
+Click **↓ Download Both** in the header. The browser will download two files:
+
+```
+nodes-YYYY-MM-DD.json
+statistics-YYYY-MM-DD.json
+```
+
+Replace `src/data/config/nodes.json` and `src/data/config/statistics.json` with the downloaded files to persist changes.
+
+---
+
+## 10. Common editing tasks
 
 ### Edit story text for an existing node
 
@@ -1014,7 +1133,7 @@ Edit `SCROLL_CONFIG` at the top of `src/components/StoryPage.tsx`. The dev serve
 
 ---
 
-## 10. Key architectural decisions
+## 11. Key architectural decisions
 
 ### All content in JSON — no React knowledge needed
 
@@ -1056,7 +1175,7 @@ All scroll parameters are grouped at the top of `StoryPage.tsx` rather than spre
 
 ---
 
-## 11. Known issues & next steps
+## 12. Known issues & next steps
 
 ### Known issues
 

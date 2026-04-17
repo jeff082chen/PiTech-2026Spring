@@ -2,17 +2,23 @@
   "nodes": {
     "start": {
       "id": "start",
-      "x": 100,
-      "y": 2000,
+      "x": 292,
+      "y": 1998,
       "category": "hotline",
       "icon": "ShieldAlert",
       "iconColor": "text-amber-500",
       "title": "Call to SCR Hotline",
       "description": "A concern about a child is reported. The first assessment is whether the child is in immediate danger.",
       "choices": [
-        { "text": "Report to ACS", "nextNodeId": "scr_screening" }
+        {
+          "text": "Report to ACS",
+          "nextNodeId": "scr_screening"
+        }
       ],
-      "statisticIds": ["start-scr-counter", "start-pipeline"]
+      "statisticIds": [
+        "start-scr-counter",
+        "start-pipeline"
+      ]
     },
     "scr_screening": {
       "id": "scr_screening",
@@ -24,15 +30,25 @@
       "title": "SCR Screening",
       "description": "ACS or local CPS screens the report to determine if it meets the statutory criteria for abuse or neglect.",
       "choices": [
-        { "text": "Does not meet criteria", "nextNodeId": "screened_out" },
-        { "text": "Accept for assessment", "nextNodeId": "safety_assessment" }
+        {
+          "text": "Does not meet criteria",
+          "nextNodeId": "screened_out"
+        },
+        {
+          "text": "Accept for assessment",
+          "nextNodeId": "safety_assessment"
+        }
       ],
-      "statisticIds": ["scr-acceptance-rate", "scr-anonymous-tips", "scr-case-volume"]
+      "statisticIds": [
+        "scr-acceptance-rate",
+        "scr-anonymous-tips",
+        "scr-case-volume"
+      ]
     },
     "screened_out": {
       "id": "screened_out",
-      "x": 1400,
-      "y": 800,
+      "x": 993,
+      "y": 1730,
       "category": "neutral",
       "icon": "XCircle",
       "iconColor": "text-neutral-500",
@@ -51,22 +67,30 @@
       "title": "Child Safety Assessment",
       "description": "A home visit and family engagement occur within 24 hours to 7 days to determine immediate safety.",
       "choices": [
-        { "text": "Divert to CARES", "nextNodeId": "cares_track" },
-        { "text": "Formal Investigation", "nextNodeId": "investigation" }
+        {
+          "text": "Divert to CARES",
+          "nextNodeId": "cares_track"
+        },
+        {
+          "text": "Formal Investigation",
+          "nextNodeId": "investigation"
+        }
       ],
       "statisticIds": []
     },
     "cares_track": {
       "id": "cares_track",
-      "x": 2050,
-      "y": 800,
+      "x": 1608,
+      "y": 1639,
       "category": "cares",
       "icon": "Handshake",
       "iconColor": "text-amber-500",
       "title": "CARES / FAR Track",
       "description": "Collaborative Assessment, Response, Engagement & Support. Used when there is no immediate danger. No formal fault is assigned.",
       "choices": [],
-      "statisticIds": ["cares-trend"]
+      "statisticIds": [
+        "cares-trend"
+      ]
     },
     "investigation": {
       "id": "investigation",
@@ -78,9 +102,16 @@
       "title": "Traditional ACS Investigation",
       "description": "A formal 60-day investigation reviewing home conditions, nutrition, medical/educational neglect, and substance use.",
       "choices": [
-        { "text": "Await Finding", "nextNodeId": "determination" }
+        {
+          "text": "Await Finding",
+          "nextNodeId": "determination"
+        }
       ],
-      "statisticIds": ["safety-warrant-rate", "investigation-race-rates", "safety-investigator-quotes"]
+      "statisticIds": [
+        "safety-warrant-rate",
+        "investigation-race-rates",
+        "safety-investigator-quotes"
+      ]
     },
     "determination": {
       "id": "determination",
@@ -92,15 +123,24 @@
       "title": "Investigation Finding",
       "description": "ACS determines the outcome. It can be 'Indicated' (requires only some credible evidence) or 'Unfounded'.",
       "choices": [
-        { "text": "Unfounded", "nextNodeId": "unsubstantiated" },
-        { "text": "Indicated", "nextNodeId": "case_plan" }
+        {
+          "text": "Unfounded",
+          "nextNodeId": "unsubstantiated"
+        },
+        {
+          "text": "Indicated",
+          "nextNodeId": "case_plan"
+        }
       ],
-      "statisticIds": ["determination-dragnet", "determination-record"]
+      "statisticIds": [
+        "determination-dragnet",
+        "determination-record"
+      ]
     },
     "unsubstantiated": {
       "id": "unsubstantiated",
-      "x": 3350,
-      "y": 800,
+      "x": 3096,
+      "y": 1693,
       "category": "neutral",
       "icon": "CheckCircle2",
       "iconColor": "text-neutral-500",
@@ -111,103 +151,141 @@
     },
     "case_plan": {
       "id": "case_plan",
-      "x": 3350,
-      "y": 2000,
+      "x": 3345,
+      "y": 2012,
       "category": "investigation",
       "icon": "ClipboardList",
       "iconColor": "text-orange-500",
       "title": "Voluntary Service Agreement",
       "description": "Family is asked to comply with a service plan. Refusal can be used as evidence of non-cooperation.",
       "choices": [
-        { "text": "File Petition", "nextNodeId": "court_filing" }
+        {
+          "text": "File Petition",
+          "nextNodeId": "court_filing"
+        },
+        {
+          "text": "Next",
+          "nextNodeId": "group_home"
+        }
       ],
-      "statisticIds": ["case-plan-coercion"]
+      "statisticIds": [
+        "case-plan-coercion"
+      ]
     },
     "court_filing": {
       "id": "court_filing",
       "x": 4000,
-      "y": 2000,
+      "y": 2011,
       "category": "court",
       "icon": "FileCheck",
       "iconColor": "text-red-500",
       "title": "ACS Files a Court Petition",
       "description": "ACS files an Article 10 petition in Family Court, formally accusing the parent of abuse or neglect.",
       "choices": [
-        { "text": "To Hearing", "nextNodeId": "court_hearing" }
+        {
+          "text": "To Hearing",
+          "nextNodeId": "court_hearing"
+        }
       ],
-      "statisticIds": ["court-duration"]
+      "statisticIds": [
+        "court-duration"
+      ]
     },
     "court_hearing": {
       "id": "court_hearing",
-      "x": 4650,
-      "y": 2000,
+      "x": 4653,
+      "y": 2012,
       "category": "court",
       "icon": "Scale",
       "iconColor": "text-red-500",
       "title": "Family Court Hearing",
       "description": "A judge reviews the case to determine whether to mandate supervision or order the removal of the child.",
       "choices": [
-        { "text": "Supervision Order", "nextNodeId": "supervision_order" },
-        { "text": "Child Removed", "nextNodeId": "foster_care_removal" }
+        {
+          "text": "Supervision Order",
+          "nextNodeId": "supervision_order"
+        },
+        {
+          "text": "Child Removed",
+          "nextNodeId": "foster_care_removal"
+        }
       ],
-      "statisticIds": ["court-geography", "court-marianna"]
+      "statisticIds": [
+        "court-geography",
+        "court-marianna"
+      ]
     },
     "supervision_order": {
       "id": "supervision_order",
-      "x": 5300,
-      "y": 2000,
+      "x": 5298,
+      "y": 2009,
       "category": "court",
       "icon": "Home",
       "iconColor": "text-orange-500",
       "title": "Court Supervision Order",
       "description": "The child remains home, but the family must strictly comply with a court-ordered service plan and ACS monitoring.",
       "choices": [],
-      "statisticIds": ["supervision-renewal"]
+      "statisticIds": [
+        "supervision-renewal"
+      ]
     },
     "foster_care_removal": {
       "id": "foster_care_removal",
-      "x": 4650,
-      "y": 3200,
+      "x": 4654,
+      "y": 2285,
       "category": "court",
       "icon": "AlertTriangle",
       "iconColor": "text-red-500",
       "title": "Child Removed",
       "description": "The child is removed from the home and placed into the physical and legal custody of ACS.",
       "choices": [
-        { "text": "Kinship Placement", "nextNodeId": "kinship_placement" },
-        { "text": "Group Home", "nextNodeId": "group_home" }
+        {
+          "text": "Kinship Placement",
+          "nextNodeId": "kinship_placement"
+        },
+        {
+          "text": "Group Home",
+          "nextNodeId": "group_home"
+        }
       ],
-      "statisticIds": ["removal-marginal-cases", "removal-cost"]
+      "statisticIds": [
+        "removal-marginal-cases",
+        "removal-cost"
+      ]
     },
     "kinship_placement": {
       "id": "kinship_placement",
-      "x": 5300,
-      "y": 3200,
+      "x": 4954,
+      "y": 2592,
       "category": "court",
       "icon": "Heart",
       "iconColor": "text-pink-500",
       "title": "Kinship Placement",
       "description": "The child is placed with a relative or close family friend. This is the preferred outcome when removal occurs.",
       "choices": [],
-      "statisticIds": ["kinship-support-gap"]
+      "statisticIds": [
+        "kinship-support-gap"
+      ]
     },
     "group_home": {
       "id": "group_home",
-      "x": 5950,
-      "y": 3200,
+      "x": 4233,
+      "y": 2289,
       "category": "court",
       "icon": "Building2",
       "iconColor": "text-red-500",
       "title": "Residential / Foster Placement",
       "description": "The child is placed in a traditional foster home or a residential group facility.",
       "choices": [],
-      "statisticIds": ["group-home-outcomes", "group-home-placement-instability"]
+      "statisticIds": [
+        "group-home-outcomes",
+        "group-home-placement-instability"
+      ]
     },
-
     "fork": {
       "id": "fork",
-      "x": 750,
-      "y": 2450,
+      "x": 748,
+      "y": 2270,
       "category": "hotline",
       "icon": "Users",
       "iconColor": "text-amber-500",
@@ -218,7 +296,6 @@
       "nodeType": "hidden",
       "parentPrimaryId": "scr_screening"
     },
-
     "cares_entry": {
       "id": "cares_entry",
       "x": 2050,
@@ -303,11 +380,10 @@
       "nodeType": "hidden",
       "parentPrimaryId": "cares_track"
     },
-
     "community_services": {
       "id": "community_services",
-      "x": 3700,
-      "y": 600,
+      "x": 3516,
+      "y": 1694,
       "category": "neutral",
       "icon": "Handshake",
       "iconColor": "text-blue-500",
@@ -318,11 +394,10 @@
       "nodeType": "hidden",
       "parentPrimaryId": "unsubstantiated"
     },
-
     "supervision_intake": {
       "id": "supervision_intake",
-      "x": 5300,
-      "y": 1500,
+      "x": 5296,
+      "y": 1755,
       "category": "court",
       "icon": "Users",
       "iconColor": "text-orange-500",
@@ -335,8 +410,8 @@
     },
     "court_service_plan": {
       "id": "court_service_plan",
-      "x": 5650,
-      "y": 1500,
+      "x": 5642,
+      "y": 1756,
       "category": "court",
       "icon": "FileCheck",
       "iconColor": "text-orange-500",
@@ -349,8 +424,8 @@
     },
     "supervision_success": {
       "id": "supervision_success",
-      "x": 6000,
-      "y": 1500,
+      "x": 6036,
+      "y": 1755,
       "category": "court",
       "icon": "CheckCircle2",
       "iconColor": "text-green-500",
@@ -363,8 +438,8 @@
     },
     "supervision_failure": {
       "id": "supervision_failure",
-      "x": 5650,
-      "y": 1800,
+      "x": 5648,
+      "y": 1486,
       "category": "warning",
       "icon": "AlertTriangle",
       "iconColor": "text-red-500",
@@ -377,8 +452,8 @@
     },
     "mandated_preventive": {
       "id": "mandated_preventive",
-      "x": 5300,
-      "y": 2400,
+      "x": 5295,
+      "y": 2260,
       "category": "court",
       "icon": "Handshake",
       "iconColor": "text-blue-500",
@@ -389,11 +464,10 @@
       "nodeType": "hidden",
       "parentPrimaryId": "supervision_order"
     },
-
     "placement_decision": {
       "id": "placement_decision",
-      "x": 4650,
-      "y": 3500,
+      "x": 4362,
+      "y": 2624,
       "category": "court",
       "icon": "Heart",
       "iconColor": "text-pink-500",
@@ -406,8 +480,8 @@
     },
     "kinship_foster_care": {
       "id": "kinship_foster_care",
-      "x": 5000,
-      "y": 3500,
+      "x": 4706,
+      "y": 2818,
       "category": "court",
       "icon": "Heart",
       "iconColor": "text-pink-500",
@@ -420,8 +494,8 @@
     },
     "medical_needs_decision": {
       "id": "medical_needs_decision",
-      "x": 4650,
-      "y": 3800,
+      "x": 4234,
+      "y": 2921,
       "category": "court",
       "icon": "Stethoscope",
       "iconColor": "text-red-500",
@@ -434,8 +508,8 @@
     },
     "specialized_foster_care": {
       "id": "specialized_foster_care",
-      "x": 5000,
-      "y": 3800,
+      "x": 4691,
+      "y": 3123,
       "category": "court",
       "icon": "Stethoscope",
       "iconColor": "text-red-500",
@@ -448,8 +522,8 @@
     },
     "trauma_decision": {
       "id": "trauma_decision",
-      "x": 4650,
-      "y": 4100,
+      "x": 3929,
+      "y": 3174,
       "category": "court",
       "icon": "Brain",
       "iconColor": "text-red-500",
@@ -462,8 +536,8 @@
     },
     "effc": {
       "id": "effc",
-      "x": 5000,
-      "y": 4100,
+      "x": 4416,
+      "y": 3318,
       "category": "court",
       "icon": "Brain",
       "iconColor": "text-red-500",
@@ -476,8 +550,8 @@
     },
     "family_setting_decision": {
       "id": "family_setting_decision",
-      "x": 4650,
-      "y": 4400,
+      "x": 3711,
+      "y": 3447,
       "category": "court",
       "icon": "Home",
       "iconColor": "text-red-500",
@@ -490,8 +564,8 @@
     },
     "traditional_foster_care_node": {
       "id": "traditional_foster_care_node",
-      "x": 5000,
-      "y": 4400,
+      "x": 4146,
+      "y": 3517,
       "category": "court",
       "icon": "Home",
       "iconColor": "text-red-500",
@@ -504,8 +578,8 @@
     },
     "residential_placement": {
       "id": "residential_placement",
-      "x": 4650,
-      "y": 4700,
+      "x": 3887,
+      "y": 3816,
       "category": "court",
       "icon": "Building2",
       "iconColor": "text-red-500",
@@ -518,47 +592,157 @@
     }
   },
   "edges": [
-    { "from": "start", "to": "scr_screening" },
-    { "from": "scr_screening", "to": "screened_out" },
-    { "from": "scr_screening", "to": "safety_assessment" },
-    { "from": "safety_assessment", "to": "cares_track" },
-    { "from": "safety_assessment", "to": "investigation" },
-    { "from": "investigation", "to": "determination" },
-    { "from": "determination", "to": "unsubstantiated" },
-    { "from": "determination", "to": "case_plan" },
-    { "from": "case_plan", "to": "court_filing" },
-    { "from": "court_filing", "to": "court_hearing" },
-    { "from": "court_hearing", "to": "supervision_order" },
-    { "from": "court_hearing", "to": "foster_care_removal" },
-    { "from": "foster_care_removal", "to": "kinship_placement" },
-    { "from": "foster_care_removal", "to": "group_home" },
-
-    { "from": "scr_screening", "to": "fork" },
-
-    { "from": "cares_track", "to": "cares_entry" },
-    { "from": "cares_entry", "to": "cares_main" },
-    { "from": "cares_main", "to": "family_led_assessment" },
-    { "from": "family_led_assessment", "to": "service_plan_cares" },
-    { "from": "service_plan_cares", "to": "cares_success" },
-    { "from": "cares_main", "to": "traditional_investigation_loop" },
-    { "from": "traditional_investigation_loop", "to": "investigation" },
-
-    { "from": "unsubstantiated", "to": "community_services" },
-
-    { "from": "supervision_order", "to": "supervision_intake" },
-    { "from": "supervision_intake", "to": "court_service_plan" },
-    { "from": "court_service_plan", "to": "supervision_success" },
-    { "from": "court_service_plan", "to": "supervision_failure" },
-    { "from": "supervision_order", "to": "mandated_preventive" },
-
-    { "from": "foster_care_removal", "to": "placement_decision" },
-    { "from": "placement_decision", "to": "kinship_foster_care" },
-    { "from": "placement_decision", "to": "medical_needs_decision" },
-    { "from": "medical_needs_decision", "to": "specialized_foster_care" },
-    { "from": "medical_needs_decision", "to": "trauma_decision" },
-    { "from": "trauma_decision", "to": "effc" },
-    { "from": "trauma_decision", "to": "family_setting_decision" },
-    { "from": "family_setting_decision", "to": "traditional_foster_care_node" },
-    { "from": "family_setting_decision", "to": "residential_placement" }
+    {
+      "from": "start",
+      "to": "scr_screening"
+    },
+    {
+      "from": "scr_screening",
+      "to": "screened_out"
+    },
+    {
+      "from": "scr_screening",
+      "to": "safety_assessment"
+    },
+    {
+      "from": "safety_assessment",
+      "to": "cares_track"
+    },
+    {
+      "from": "safety_assessment",
+      "to": "investigation"
+    },
+    {
+      "from": "investigation",
+      "to": "determination"
+    },
+    {
+      "from": "determination",
+      "to": "unsubstantiated"
+    },
+    {
+      "from": "determination",
+      "to": "case_plan"
+    },
+    {
+      "from": "case_plan",
+      "to": "court_filing"
+    },
+    {
+      "from": "court_filing",
+      "to": "court_hearing"
+    },
+    {
+      "from": "court_hearing",
+      "to": "supervision_order"
+    },
+    {
+      "from": "court_hearing",
+      "to": "foster_care_removal"
+    },
+    {
+      "from": "foster_care_removal",
+      "to": "kinship_placement"
+    },
+    {
+      "from": "foster_care_removal",
+      "to": "group_home"
+    },
+    {
+      "from": "scr_screening",
+      "to": "fork"
+    },
+    {
+      "from": "cares_track",
+      "to": "cares_entry"
+    },
+    {
+      "from": "cares_entry",
+      "to": "cares_main"
+    },
+    {
+      "from": "cares_main",
+      "to": "family_led_assessment"
+    },
+    {
+      "from": "family_led_assessment",
+      "to": "service_plan_cares"
+    },
+    {
+      "from": "service_plan_cares",
+      "to": "cares_success"
+    },
+    {
+      "from": "cares_main",
+      "to": "traditional_investigation_loop"
+    },
+    {
+      "from": "traditional_investigation_loop",
+      "to": "investigation"
+    },
+    {
+      "from": "unsubstantiated",
+      "to": "community_services"
+    },
+    {
+      "from": "supervision_order",
+      "to": "supervision_intake"
+    },
+    {
+      "from": "supervision_intake",
+      "to": "court_service_plan"
+    },
+    {
+      "from": "court_service_plan",
+      "to": "supervision_success"
+    },
+    {
+      "from": "court_service_plan",
+      "to": "supervision_failure"
+    },
+    {
+      "from": "supervision_order",
+      "to": "mandated_preventive"
+    },
+    {
+      "from": "foster_care_removal",
+      "to": "placement_decision"
+    },
+    {
+      "from": "placement_decision",
+      "to": "kinship_foster_care"
+    },
+    {
+      "from": "placement_decision",
+      "to": "medical_needs_decision"
+    },
+    {
+      "from": "medical_needs_decision",
+      "to": "specialized_foster_care"
+    },
+    {
+      "from": "medical_needs_decision",
+      "to": "trauma_decision"
+    },
+    {
+      "from": "trauma_decision",
+      "to": "effc"
+    },
+    {
+      "from": "trauma_decision",
+      "to": "family_setting_decision"
+    },
+    {
+      "from": "family_setting_decision",
+      "to": "traditional_foster_care_node"
+    },
+    {
+      "from": "family_setting_decision",
+      "to": "residential_placement"
+    },
+    {
+      "from": "case_plan",
+      "to": "group_home"
+    }
   ]
 }
