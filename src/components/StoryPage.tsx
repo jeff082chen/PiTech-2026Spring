@@ -16,17 +16,19 @@ const SCROLL_CONFIG = {
   phaseHeights: {
     hero:     1.5,
     overview: 1.0,
-    focus:    1.0,
+    move:     1.0,    // pan to node at normal scale
+    focus:    1.0,    // zoom-in phase (camera zooms from normal → big)
     story:    1.2,
     stat:     1.0,
+    zoomOut:  1.0,    // zoom-out phase (camera zooms from big → normal)
     ending:   1.2,
   },
 
   // Camera zoom levels for the flowchart canvas.
   cam: {
-    overviewFit: 0.88,  // fraction of viewport filled by the overview
-    focusScale:  0.48,  // canvas scale when zoomed in on a node
-    storyScale:  0.60,  // canvas scale when story card is visible
+    overviewFit: 0.88,   // fraction of viewport filled by the overview
+    normalScale: 0.8,    // node scale at rest / between interactions
+    bigScale:    8.0,    // fill-screen scale when node zooms in for story/stat
   },
 
   // Dark overlay opacity per phase (0 = transparent, 1 = fully opaque).
@@ -34,9 +36,9 @@ const SCROLL_CONFIG = {
     hero:       0.92,
     overview:   0.06,
     focusStart: 0.12,  // opacity at start of node-focus phase (lerps → focusEnd)
-    focusEnd:   0.55,  // opacity at end of node-focus phase
-    story:      0.82,
-    stat:       0.80,
+    focusEnd:   0.45,  // opacity at end of node-focus phase (lighter — story fades in at this level)
+    story:      0.60,  // flowchart partially visible behind story card
+    stat:       0.60,  // same as story for consistency
     ending:     0.95,
   },
 
@@ -90,13 +92,15 @@ const OVERVIEW_KF: CameraKF = { nodeId: null, scale: 0 };
 
 function resolveCam(kf: CameraKF, vw: number, vh: number): { tx: number; ty: number; scale: number } {
   if (kf.nodeId === null || kf.scale === 0) {
-    const scale = Math.min(vw / CANVAS_W, vh / CANVAS_H) * SCROLL_CONFIG.cam.overviewFit;
-    return { tx: (vw - CANVAS_W * scale) / 2, ty: (vh - CANVAS_H * scale) / 2, scale };
+    // Vertical canvas: effective display size is CANVAS_H wide × CANVAS_W tall (x↔y swapped)
+    const scale = Math.min(vw / CANVAS_H, vh / CANVAS_W) * SCROLL_CONFIG.cam.overviewFit;
+    return { tx: (vw - CANVAS_H * scale) / 2, ty: (vh - CANVAS_W * scale) / 2, scale };
   }
   const node = STORY_NODES[kf.nodeId];
+  // Vertical layout: node.y → horizontal (left), node.x → vertical (top)
   return {
-    tx: vw * 0.5 - node.x * kf.scale,
-    ty: vh * 0.5 - node.y * kf.scale,
+    tx: vw * 0.5 - node.y * kf.scale,
+    ty: vh * 0.5 - node.x * kf.scale,
     scale: kf.scale,
   };
 }
@@ -114,9 +118,11 @@ type Phase = {
 } & (
   | { type: 'hero' }
   | { type: 'overview' }
-  | { type: 'node-focus'; nodeId: string }
-  | { type: 'node-story'; nodeId: string }
-  | { type: 'node-stat';  nodeId: string; statIndex: number }
+  | { type: 'node-move';     nodeId: string }
+  | { type: 'node-zoom-in';  nodeId: string }
+  | { type: 'node-story';    nodeId: string }
+  | { type: 'node-stat';     nodeId: string; statIndex: number }
+  | { type: 'node-zoom-out'; nodeId: string }
   | { type: 'ending' }
 );
 
@@ -134,20 +140,20 @@ function buildPhases(storyConfig: StoryConfig, vh: number): Phase[] {
 
   const h = (k: keyof typeof phaseHeights) => Math.round(phaseHeights[k] * vh);
 
-  push({ type: 'hero',     startY: y, height: h('hero'),     camStart: OVERVIEW_KF, camEnd: OVERVIEW_KF });
-  push({ type: 'overview', startY: y, height: h('overview'), camStart: OVERVIEW_KF, camEnd: OVERVIEW_KF });
+  push({ type: 'hero', startY: y, height: h('hero'), camStart: OVERVIEW_KF, camEnd: OVERVIEW_KF });
 
   for (const nodeId of storyConfig.path) {
     const statCount = STORY_NODES[nodeId]?.statistics?.length ?? 0;
-    const focusKF: CameraKF = { nodeId, scale: cam.focusScale };
-    const storyKF: CameraKF = { nodeId, scale: cam.storyScale };
+    const normalKF: CameraKF = { nodeId, scale: cam.normalScale };
+    const bigKF:    CameraKF = { nodeId, scale: cam.bigScale };
 
-    push({ type: 'node-focus', nodeId, startY: y, height: h('focus'), camStart: prevCamEnd, camEnd: focusKF });
-    push({ type: 'node-story', nodeId, startY: y, height: h('story'), camStart: focusKF,    camEnd: storyKF });
-
+    push({ type: 'node-move',     nodeId, startY: y, height: h('move'),    camStart: prevCamEnd, camEnd: normalKF });
+    push({ type: 'node-zoom-in',  nodeId, startY: y, height: h('focus'),   camStart: normalKF,   camEnd: bigKF    });
+    push({ type: 'node-story',    nodeId, startY: y, height: h('story'),   camStart: bigKF,      camEnd: bigKF    });
     for (let i = 0; i < statCount; i++) {
-      push({ type: 'node-stat', nodeId, statIndex: i, startY: y, height: h('stat'), camStart: storyKF, camEnd: storyKF });
+      push({ type: 'node-stat', nodeId, statIndex: i, startY: y, height: h('stat'), camStart: bigKF, camEnd: bigKF });
     }
+    push({ type: 'node-zoom-out', nodeId, startY: y, height: h('zoomOut'), camStart: bigKF,      camEnd: normalKF });
   }
 
   if (storyConfig.ending) {
@@ -260,7 +266,9 @@ export default function StoryPage({ storyConfig, onExploreMap }: Props) {
 
   // Derived state
   const cameraNodeId =
-    phase.type === 'node-focus' || phase.type === 'node-story' || phase.type === 'node-stat'
+    phase.type === 'node-move'    || phase.type === 'node-zoom-in' ||
+    phase.type === 'node-story'   || phase.type === 'node-stat'    ||
+    phase.type === 'node-zoom-out'
       ? phase.nodeId : null;
 
   const isStat      = phaseType === 'node-stat';
@@ -269,24 +277,34 @@ export default function StoryPage({ storyConfig, onExploreMap }: Props) {
 
   const currentStatIndex = phase.type === 'node-stat' ? phase.statIndex : -1;
 
-  // Focus hint: delayed to avoid overlap with fading content
-  const focusNodeId = phase.type === 'node-focus' ? phase.nodeId : null;
+  // Focus hint: shown during zoom-in phase
+  const focusNodeId  = phase.type === 'node-move' || phase.type === 'node-zoom-in' ? phase.nodeId : null;
+  const inFocusPhase = phaseType === 'node-move' || phaseType === 'node-zoom-in';
   useEffect(() => {
-    if (phaseType !== 'node-focus') { setShowFocusHint(false); return; }
+    if (!inFocusPhase) { setShowFocusHint(false); return; }
     setShowFocusHint(false);
     const timer = setTimeout(() => setShowFocusHint(true), SCROLL_CONFIG.focusHintDelayMs);
     return () => clearTimeout(timer);
-  }, [phaseType, focusNodeId]);
+  }, [inFocusPhase, focusNodeId]);
+
+  // Node card text fades out as camera zooms in, fades back in as it zooms out
+  const activeNodeTextOpacity =
+    phaseType === 'node-move'     ? 1 :
+    phaseType === 'node-zoom-in'  ? 1 - te :
+    phaseType === 'node-story' || phaseType === 'node-stat' ? 0 :
+    phaseType === 'node-zoom-out' ? te :
+    1;
 
   // Overlay opacity
   const { overlay } = SCROLL_CONFIG;
   const overlayOpacity =
-    phaseType === 'hero'       ? overlay.hero :
-    phaseType === 'overview'   ? overlay.overview :
-    phaseType === 'node-focus' ? lerp(overlay.focusStart, overlay.focusEnd, te) :
-    phaseType === 'node-story' ? overlay.story :
-    phaseType === 'node-stat'  ? overlay.stat :
-    phaseType === 'ending'     ? overlay.ending : 0.5;
+    phaseType === 'hero'          ? overlay.hero :
+    phaseType === 'node-move'     ? overlay.focusStart :
+    phaseType === 'node-zoom-in'  ? lerp(overlay.focusStart, overlay.focusEnd, te) :
+    phaseType === 'node-story'    ? overlay.story :
+    phaseType === 'node-stat'     ? overlay.stat :
+    phaseType === 'node-zoom-out' ? lerp(overlay.story, overlay.focusStart, te) :
+    phaseType === 'ending'        ? overlay.ending : 0.5;
 
   // Progress bar
   const progressPct = phases.length > 1 ? (phaseIndex / (phases.length - 1)) * 100 : 0;
@@ -312,7 +330,7 @@ export default function StoryPage({ storyConfig, onExploreMap }: Props) {
   const STAT_W = isMobile ? vw * layout.statMobileFrac : vw * layout.statFraction;
 
   const cardLeft = !isMobile && isStat
-    ? vw * layout.cardStatLeftFrac
+    ? (vw / 2 - CARD_W) / 2
     : (vw - CARD_W) / 2;
 
   const statLeft    = vw * layout.statPanelLeftFrac + layout.statPanelGapPx;
@@ -334,21 +352,23 @@ export default function StoryPage({ storyConfig, onExploreMap }: Props) {
       <div className="sticky top-0 h-screen w-screen overflow-hidden">
 
         {/* ── Layer 1: Flowchart canvas — scroll-driven, NO CSS transition ──── */}
+        {/* Canvas dimensions are CANVAS_H × CANVAS_W (x↔y swapped for vertical layout) */}
         <div
           className="absolute top-0 left-0 origin-top-left"
-          style={{ width: CANVAS_W, height: CANVAS_H, transform: cameraTransform }}
+          style={{ width: CANVAS_H, height: CANVAS_W, transform: cameraTransform }}
         >
-          <svg className="absolute inset-0 pointer-events-none" style={{ width: CANVAS_W, height: CANVAS_H }}>
+          <svg className="absolute inset-0 pointer-events-none" style={{ width: CANVAS_H, height: CANVAS_W }}>
             {EDGES.filter(e => STORY_NODES[e.from]?.nodeType !== 'hidden' && STORY_NODES[e.to]?.nodeType !== 'hidden').map((edge, i) => {
               const n1 = STORY_NODES[edge.from];
               const n2 = STORY_NODES[edge.to];
               const onPath = pathSet.has(edge.from) && pathSet.has(edge.to);
-              const d = `M ${n1.x} ${n1.y} C ${n1.x + 200} ${n1.y}, ${n2.x - 200} ${n2.y}, ${n2.x} ${n2.y}`;
+              // Vertical layout: swap coords; control points in y-direction for top-to-bottom curves
+              const d = `M ${n1.y} ${n1.x} C ${n1.y} ${n1.x + 200}, ${n2.y} ${n2.x - 200}, ${n2.y} ${n2.x}`;
               return (
                 <path key={i} d={d} fill="none"
                   stroke={onPath ? '#ef4444' : '#374151'}
                   strokeWidth={onPath ? 3 : 2}
-                  opacity={onPath ? 0.8 : 0.3}
+                  opacity={onPath ? activeNodeTextOpacity * 0.8 : 0.3}
                 />
               );
             })}
@@ -359,22 +379,24 @@ export default function StoryPage({ storyConfig, onExploreMap }: Props) {
             const isVisited = visitedSet.has(node.id);
             const onPath    = pathSet.has(node.id);
             const stateClass =
-              isActive  ? 'opacity-100 scale-110 ring-4 ring-red-500/60 shadow-2xl shadow-red-900/30' :
+              isActive  ? (showContent
+                            ? 'opacity-20 scale-110 ring-4 ring-red-500/40 shadow-2xl shadow-red-900/30'
+                            : 'opacity-100 scale-110 ring-4 ring-red-500/60 shadow-2xl shadow-red-900/30') :
               isVisited ? 'opacity-35' :
               onPath    ? 'opacity-60' :
                           'opacity-15 grayscale';
             return (
               <div key={node.id}
                 className="absolute -translate-x-1/2 -translate-y-1/2 pointer-events-none"
-                style={{ left: node.x, top: node.y, width: 260 }}
+                style={{ left: node.y, top: node.x, width: 260 }}
               >
                 <div className={[
                   'flex flex-col items-center justify-center p-4',
                   'bg-neutral-800/80 rounded-2xl border-2 shadow-lg transition-all duration-500',
                   BORDER_COLOR[node.category], stateClass,
                 ].join(' ')}>
-                  <div className="mb-2">{node.icon}</div>
-                  <h3 className="text-sm font-bold text-neutral-100 text-center leading-tight">{node.title}</h3>
+                  <div className="mb-2" style={{ opacity: isActive ? activeNodeTextOpacity : undefined }}>{node.icon}</div>
+                  <h3 className="text-sm font-bold text-neutral-100 text-center leading-tight" style={{ opacity: isActive ? activeNodeTextOpacity : undefined }}>{node.title}</h3>
                 </div>
               </div>
             );
@@ -413,17 +435,7 @@ export default function StoryPage({ storyConfig, onExploreMap }: Props) {
           </div>
         </div>
 
-        {/* ── Layer 4: Overview label ───────────────────────────────────────── */}
-        <div
-          className="absolute bottom-10 left-0 right-0 flex flex-col items-center gap-2 pointer-events-none"
-          style={{ opacity: phaseType === 'overview' ? 1 : 0, transition: `opacity ${transitions.screenFade}` }}
-        >
-          <p className="text-neutral-300 text-sm font-bold uppercase tracking-widest">{storyConfig.intro.title}</p>
-          <p className="text-neutral-600 text-xs">The system {storyConfig.character.name} will navigate</p>
-          <ChevronDown className="w-4 h-4 text-neutral-600 animate-bounce mt-1" />
-        </div>
-
-        {/* ── Layer 5: Node-focus hint ──────────────────────────────────────── */}
+{/* ── Layer 5: Node-focus hint ──────────────────────────────────────── */}
         <div
           className="absolute bottom-10 left-0 right-0 flex flex-col items-center gap-2 pointer-events-none"
           style={{ opacity: showFocusHint ? 1 : 0, transition: `opacity ${transitions.focusHint}` }}
