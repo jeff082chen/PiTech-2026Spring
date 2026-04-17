@@ -1,0 +1,132 @@
+{
+  "id": "marcus",
+  "title": "Marcus's Story",
+  "character": {
+    "name": "Marcus",
+    "summary": "Marcus is a devoted father who has a mild learning disability. When his 8-year-old son accidentally broke his arm playing at home, a cascade of misinterpretations tore their family apart."
+  },
+  "intro": {
+    "title": "The Machinery of Removal",
+    "description": "When an accidental injury is misconstrued as abuse, the gears of the child welfare system turn mercilessly. Marcus's story tracks the devastating journey from an emergency room visit to a child's removal."
+  },
+  "path": [
+    "start",
+    "scr_screening",
+    "safety_assessment",
+    "investigation",
+    "determination",
+    "case_plan",
+    "court_filing",
+    "court_hearing",
+    "foster_care_removal",
+    "group_home"
+  ],
+  "nodeContent": {
+    "start": {
+      "blocks": [
+        {
+          "type": "text",
+          "title": "Suspicion in the ER",
+          "body": "Marcus rushed his son to the emergency room for a broken arm. A doctor noticed faded bruises on the boy's legs (from playing basketball) and, frustrated by Marcus's slower processing speed when answering questions, suspected physical abuse and called the hotline."
+        }
+      ]
+    },
+    "scr_screening": {
+      "blocks": [
+        {
+          "type": "text",
+          "title": "Logged by the State",
+          "body": "Because the call came from a medical professional—a 'mandated reporter'—alleging physical abuse, the SCR worker immediately accepted the report. It was logged into the system and rapidly dispatched to the local borough office for an emergency response."
+        }
+      ]
+    },
+    "safety_assessment": {
+      "blocks": [
+        {
+          "type": "text",
+          "title": "A Midnight Knock",
+          "body": "At 11:30 PM, an ACS investigator accompanied by two NYPD officers banged on Marcus's door, demanding to inspect the child's bedroom and the refrigerator."
+        },
+        {
+          "type": "quote",
+          "text": "They kept asking why I didn't have milk in the fridge. My son is lactose intolerant, but they wouldn't listen.",
+          "attribution": "Marcus"
+        }
+      ]
+    },
+    "investigation": {
+      "blocks": [
+        {
+          "type": "callout",
+          "text": "The formal investigation lasts 60 days, subjecting the family to unannounced visits and intrusive interviews with neighbors and teachers."
+        }
+      ]
+    },
+    "determination": {
+      "blocks": [
+        {
+          "type": "text",
+          "title": "An 'Indicated' Finding",
+          "body": "ACS designated the case as \"Indicated.\" In New York, this only requires \"some credible evidence\" in the eyes of the investigator. This mark will stay on Marcus's record for up to 28 years."
+        }
+      ]
+    },
+    "case_plan": {
+      "blocks": [
+        {
+          "type": "text",
+          "title": "Coerced Compliance",
+          "body": "ACS pressured Marcus into a \"voluntary\" service agreement, requiring him to attend weekly anger management classes. Due to inflexible shifts at his warehouse job, Marcus missed two sessions."
+        }
+      ]
+    },
+    "court_filing": {
+      "blocks": [
+        {
+          "type": "text",
+          "body": "Citing his missed classes as \"non-compliance\" and lack of parental fitness, ACS filed an Article 10 petition in Family Court against Marcus."
+        }
+      ]
+    },
+    "court_hearing": {
+      "blocks": [
+        {
+          "type": "text",
+          "title": "Five Minutes of Justice",
+          "body": "During the hearing, the judge relied heavily on the ACS attorney's narrative. Marcus's public defender had only five minutes to speak with him prior to the hearing. The judge ruled that the boy was at \"imminent risk.\""
+        }
+      ]
+    },
+    "foster_care_removal": {
+      "blocks": [
+        {
+          "type": "text",
+          "title": "The Separation",
+          "body": "The judge ordered the immediate removal of the child. ACS caseworkers picked the boy up directly from his elementary school that afternoon. Marcus wasn't even allowed to say goodbye."
+        },
+        {
+          "type": "quote",
+          "text": "They said it was to keep him safe. But his asthma inhaler was still sitting on our kitchen table.",
+          "attribution": "Marcus"
+        }
+      ]
+    },
+    "group_home": {
+      "blocks": [
+        {
+          "type": "text",
+          "title": "Institutionalization",
+          "body": "Because no immediate family members were cleared in time, Marcus's son was placed in a residential group home in Brooklyn, forced to live with a dozen other children under cold, institutional rules."
+        }
+      ]
+    }
+  },
+  "ending": {
+    "title": "A Fractured Family",
+    "description": "Marcus is now only permitted to see his son for two hours, twice a week, in a supervised visiting room. A misunderstood medical accident and systemic bias against disabilities destroyed their family life.",
+    "actions": [
+      "Support Miranda Rights for families facing child welfare investigations.",
+      "Push for legislation to raise the evidentiary standard required for family separation."
+    ]
+  }
+}

@@ -1,0 +1,73 @@
+{
+  "id": "elena",
+  "title": "Elena's Story",
+  "character": {
+    "name": "Elena",
+    "summary": "Elena is a single mother working two jobs. When her daughter arrived at school wearing unwashed clothes for several consecutive days, a teacher made a report."
+  },
+  "intro": {
+    "title": "Poverty Mistaken for Neglect",
+    "description": "The child welfare system often misinterprets symptoms of poverty—such as crowded housing or unwashed clothing—as parental \"neglect.\" Elena's experience highlights the alternative CARES track."
+  },
+  "path": [
+    "start",
+    "scr_screening",
+    "safety_assessment",
+    "cares_track"
+  ],
+  "nodeContent": {
+    "start": {
+      "blocks": [
+        {
+          "type": "text",
+          "title": "The School's Call",
+          "body": "Elena and her daughter were recently evicted and had been sleeping on a friend's couch. Without access to a laundromat or extra money, washing clothes became impossible. A teacher, acting as a \"mandated reporter,\" called the hotline."
+        }
+      ]
+    },
+    "scr_screening": {
+      "blocks": [
+        {
+          "type": "text",
+          "title": "Accepted for Assessment",
+          "body": "ACS accepted the report, classifying the dirty clothing as a potential indicator of deeper \"educational and physical neglect,\" and dispatched a worker."
+        }
+      ]
+    },
+    "safety_assessment": {
+      "blocks": [
+        {
+          "type": "text",
+          "title": "The Home Visit",
+          "body": "A caseworker arrived at the friend's apartment. Despite the cramped living conditions, the worker quickly determined the child was unharmed, fed, and clearly loved."
+        },
+        {
+          "type": "quote",
+          "text": "I am not neglecting my child. I just didn't have the $10 needed for the laundromat this week.",
+          "attribution": "Elena"
+        }
+      ]
+    },
+    "cares_track": {
+      "blocks": [
+        {
+          "type": "text",
+          "title": "Diverted to CARES",
+          "body": "Because there was no immediate danger, Elena's case was diverted to the CARES (Collaborative Assessment, Response, Engagement & Support) track. No formal investigation was launched, and she avoided a permanent record. The worker helped connect Elena to a local food pantry and a temporary laundry stipend."
+        },
+        {
+          "type": "callout",
+          "text": "While the CARES track avoids the stigma of a formal record, it still subjects families to systemic surveillance in exchange for basic material needs."
+        }
+      ]
+    }
+  },
+  "ending": {
+    "title": "A Temporary Relief",
+    "description": "Sixty days later, the CARES case was closed. Elena received some short-term material help, but her fundamental housing instability remained unresolved. Her story asks: why must families enter the 'child protection' system just to access basic social safety nets?",
+    "actions": [
+      "Support direct cash assistance and housing subsidies for families in poverty.",
+      "Reduce reliance on mandated reporters by funding community-based mutual aid."
+    ]
+  }
+}

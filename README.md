@@ -593,12 +593,12 @@ Each row has two segments side by side: a highlighted left segment and a neutral
 {
   "type": "stacked-bars",
   "label": "FY 2023 — What Follows a Report",
-  "leftLabel": "indicated",
+  "leftLabel": "Indicated",
   "rightLabel": "unsubstantiated",
   "rows": [
-    { "label": "Black & Latino families", "leftPct": 18 },
-    { "label": "White families",          "leftPct": 24 },
-    { "label": "All families",            "leftPct": 23 }
+    { "label": "Black & Latino families", "leftPct": 22 },
+    { "label": "White families",          "leftPct": 26 },
+    { "label": "All families",            "leftPct": 23.1 }
   ],
   "note": "In FY 2023, 56.6% of all intakes were unsubstantiated."
 }
@@ -967,8 +967,7 @@ Primary nodes (StoryPage uses `6700 × 4500`; MapView uses `6700 × 5500`):
 
 ```
 y ≈ 600–900    Better-outcome exits (screened_out, cares_track, unsubstantiated)
-y ≈ 1100       Supervision endpoint
-y ≈ 2000       Main horizontal spine (hotline → court)
+y ≈ 2000       Main horizontal spine (hotline → court → supervision_order)
 y ≈ 2950–3550  Removal branches (foster care, kinship, group home)
 X spacing: ~650 px per depth column
 ```
@@ -1118,7 +1117,7 @@ All valid values for any `accentColor` field:
 | `scr_screening` | SCR Screening | `hotline` |
 | `screened_out` | Call Screened Out | `neutral` |
 | `safety_assessment` | Safety Assessment | `neutral` |
-| `cares_track` | CARES — Supportive Track | `cares` |
+| `cares_track` | CARES / FAR Track | `cares` |
 | `investigation` | ACS Investigation | `investigation` |
 | `determination` | Investigation Finding | `investigation` |
 | `unsubstantiated` | Case Closed — Unfounded | `neutral` |

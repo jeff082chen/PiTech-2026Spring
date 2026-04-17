@@ -1,17 +1,14 @@
 {
   "id": "maria",
   "title": "Maria's Story",
-
   "character": {
     "name": "Maria",
     "summary": "Maria is a single mother of two in the South Bronx, working two jobs to keep her family afloat. When a neighbor calls the hotline after overhearing her children argue, Maria's family is pulled into the family policing system — not because she did anything wrong, but because she was poor, Black, and living in a neighborhood under constant surveillance."
   },
-
   "intro": {
     "title": "A Call That Changes Everything",
     "description": "In New York City, over 196,000 calls are made to the child abuse hotline each year. The majority of investigated families are Black or Latino. Most have done nothing wrong. This is Maria's story — and the story of thousands of families like hers."
   },
-
   "path": [
     "start",
     "scr_screening",
@@ -23,14 +20,13 @@
     "court_hearing",
     "supervision_order"
   ],
-
   "nodeContent": {
     "start": {
       "blocks": [
         {
           "type": "text",
           "title": "The Call",
-          "body": "On a Tuesday afternoon in October, Maria comes home from her second job to find a notice on her door. An ACS caseworker has been by. Someone — she is never told who — called the hotline to report her family. Maria has not been accused of anything specific. But the investigation has already begun."
+          "body": "On a Tuesday afternoon in October, Maria is at her second job when a neighbor overhears her children arguing through the thin apartment walls. The neighbor dials the State Central Register (SCR) hotline. Maria has no idea her family has been reported, but the machinery of the family policing system has just been activated."
         },
         {
           "type": "callout",
@@ -38,13 +34,12 @@
         }
       ]
     },
-
     "scr_screening": {
       "blocks": [
         {
           "type": "text",
           "title": "Screened In",
-          "body": "The State Central Register accepts the report. Maria's family is now in the system. She has no right to know what was alleged or who alleged it. The caller can remain anonymous forever. A case number is assigned. A caseworker is dispatched."
+          "body": "The State Central Register accepts the report. Maria's family is now in the system. She has no right to know what was alleged or who alleged it. The caller can remain anonymous forever. A case number is assigned, and a caseworker is dispatched to investigate."
         },
         {
           "type": "quote",
@@ -53,13 +48,12 @@
         }
       ]
     },
-
     "safety_assessment": {
       "blocks": [
         {
           "type": "text",
           "title": "The First Visit",
-          "body": "A caseworker knocks unannounced. She walks through Maria's apartment, opens the refrigerator, inspects the children's bedroom, and asks to speak with Maria's kids alone. Maria is not under arrest. But she has been told — implicitly — that refusing entry could lead to her children being taken. She lets the caseworker in."
+          "body": "Maria comes home from work to find a notice on her door. Later that evening, an ACS caseworker returns and knocks unannounced. She walks through Maria's apartment, opens the refrigerator, inspects the children's bedroom, and asks to speak with Maria's kids alone. Maria is not under arrest. But she has been told — implicitly — that refusing entry could lead to her children being taken. She lets the caseworker in."
         },
         {
           "type": "quote",
@@ -72,7 +66,6 @@
         }
       ]
     },
-
     "investigation": {
       "blocks": [
         {
@@ -91,7 +84,6 @@
         }
       ]
     },
-
     "determination": {
       "blocks": [
         {
@@ -110,7 +102,6 @@
         }
       ]
     },
-
     "case_plan": {
       "blocks": [
         {
@@ -129,7 +120,6 @@
         }
       ]
     },
-
     "court_filing": {
       "blocks": [
         {
@@ -148,7 +138,6 @@
         }
       ]
     },
-
     "court_hearing": {
       "blocks": [
         {
@@ -167,7 +156,6 @@
         }
       ]
     },
-
     "supervision_order": {
       "blocks": [
         {
@@ -187,7 +175,6 @@
       ]
     }
   },
-
   "ending": {
     "title": "The System Stays",
     "description": "Maria's case is eventually closed — fourteen months after that first knock on her door. Her children were never in danger. The original report was never substantiated. But the record of her investigation remains on the State Central Register. The trauma of fourteen months of surveillance remains. And somewhere in the Bronx tonight, another family is receiving a knock at their door.",

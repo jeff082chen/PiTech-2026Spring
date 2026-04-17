@@ -351,8 +351,7 @@ Primary nodes (StoryPage canvas: `6700 × 4500`, MapView canvas: `6700 × 5500`)
 
 ```
 y ≈ 600–900    Better-outcome exits (screened_out, cares_track, unsubstantiated)
-y ≈ 1100       Supervision endpoint (supervision_order)
-y ≈ 2000       Main spine: start → SCR → safety_assessment → investigation → court
+y ≈ 2000       Main spine: start → SCR → safety_assessment → investigation → court → supervision_order
 y ≈ 2950–3550  Removal branches: foster_care_removal → kinship_placement / group_home
 ```
 
@@ -650,9 +649,9 @@ Each row is a two-color bar: left = indicated (highlighted), right = unsubstanti
   "leftLabel": "Indicated",
   "rightLabel": "unsubstantiated",
   "rows": [
-    { "label": "Black & Latino families", "leftPct": 18 },
-    { "label": "White families",          "leftPct": 24 },
-    { "label": "All families",            "leftPct": 23 }
+    { "label": "Black & Latino families", "leftPct": 22 },
+    { "label": "White families",          "leftPct": 26 },
+    { "label": "All families",            "leftPct": 23.1 }
   ],
   "note": "56.6% of all intakes were unsubstantiated."
 }

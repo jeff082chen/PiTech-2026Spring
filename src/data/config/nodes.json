@@ -1,634 +1,564 @@
 {
   "nodes": {
-
     "start": {
       "id": "start",
-      "x": 350,
+      "x": 100,
       "y": 2000,
       "category": "hotline",
       "icon": "ShieldAlert",
-      "iconColor": "text-yellow-500",
+      "iconColor": "text-amber-500",
       "title": "Call to SCR Hotline",
-      "description": "Someone has called the State Central Register (SCR) hotline to report your family for alleged neglect. Callers can be mandated reporters — teachers, doctors, hospital staff — or anonymous members of the public. You may never learn who called or exactly what was said.",
+      "description": "A concern about a child is reported. The first assessment is whether the child is in immediate danger.",
       "choices": [
-        { "text": "Report sent to SCR Screening", "nextNodeId": "scr_screening" }
+        { "text": "Report to ACS", "nextNodeId": "scr_screening" }
       ],
-      "statisticIds": ["start-pipeline", "start-scr-counter"]
+      "statisticIds": ["start-scr-counter", "start-pipeline"]
     },
-
     "scr_screening": {
       "id": "scr_screening",
-      "x": 1000,
+      "x": 750,
       "y": 2000,
       "category": "hotline",
       "icon": "Search",
-      "iconColor": "text-blue-400",
+      "iconColor": "text-amber-500",
       "title": "SCR Screening",
-      "description": "An SCR operator evaluates the report against New York State legal criteria. To be \"screened in,\" the report must identify a child under 18, a caregiver with a legal duty of care, a failure to meet minimum standards, and imminent risk of harm. All four must be present — but in practice, the bar is low.",
+      "description": "ACS or local CPS screens the report to determine if it meets the statutory criteria for abuse or neglect.",
       "choices": [
-        { "text": "Report does not meet criteria — Screened Out", "nextNodeId": "screened_out" },
-        { "text": "Report meets criteria — Screened In", "nextNodeId": "safety_assessment" }
+        { "text": "Does not meet criteria", "nextNodeId": "screened_out" },
+        { "text": "Accept for assessment", "nextNodeId": "safety_assessment" }
       ],
       "statisticIds": ["scr-acceptance-rate", "scr-anonymous-tips", "scr-case-volume"]
     },
-
     "screened_out": {
       "id": "screened_out",
-      "x": 1000,
-      "y": 600,
+      "x": 1400,
+      "y": 800,
       "category": "neutral",
       "icon": "XCircle",
-      "iconColor": "text-neutral-400",
+      "iconColor": "text-neutral-500",
       "title": "Call Screened Out",
-      "description": "The SCR operator determined the report did not meet the statutory criteria. No investigation will occur — this time. However, anyone may call again at any moment. Repeat reports substantially increase the likelihood of a full investigation, regardless of their merit.",
+      "description": "The report does not meet the legal definition of abuse/neglect and is dropped without an investigation.",
       "choices": [],
       "statisticIds": []
     },
-
     "safety_assessment": {
       "id": "safety_assessment",
-      "x": 1650,
+      "x": 1400,
       "y": 2000,
       "category": "neutral",
       "icon": "Shield",
       "iconColor": "text-amber-500",
-      "title": "Safety Assessment",
-      "description": "A caseworker arrives — often unannounced — within 24 hours to 7 days of the report. Using the FAR Screening Tool, they assess whether your family qualifies for the supportive CARES track or must face a punitive Traditional Investigation. The caseworker has wide discretion in this determination.",
+      "title": "Child Safety Assessment",
+      "description": "A home visit and family engagement occur within 24 hours to 7 days to determine immediate safety.",
       "choices": [
-        { "text": "Assessed as safe — routed to CARES supportive track", "nextNodeId": "cares_track" },
-        { "text": "Danger identified — routed to traditional investigation", "nextNodeId": "investigation" }
+        { "text": "Divert to CARES", "nextNodeId": "cares_track" },
+        { "text": "Formal Investigation", "nextNodeId": "investigation" }
       ],
-      "statisticIds": ["safety-warrant-rate", "safety-investigator-quotes"]
+      "statisticIds": []
     },
-
     "cares_track": {
       "id": "cares_track",
-      "x": 2300,
+      "x": 2050,
       "y": 800,
       "category": "cares",
       "icon": "Handshake",
-      "iconColor": "text-green-500",
-      "title": "CARES — Supportive Track",
-      "description": "Your case is classified as CARES (Collaborative Assessment, Response, Engagement & Support). ACS presents this as a \"voluntary,\" family-led process. A caseworker will conduct scheduled home visits, develop a service plan with you, and monitor your progress over roughly 60 days. Completing the plan closes the case.",
-      "choices": [
-        { "text": "Refused participation — escalated to investigation", "nextNodeId": "investigation" }
-      ],
+      "iconColor": "text-amber-500",
+      "title": "CARES / FAR Track",
+      "description": "Collaborative Assessment, Response, Engagement & Support. Used when there is no immediate danger. No formal fault is assigned.",
+      "choices": [],
       "statisticIds": ["cares-trend"]
     },
-
     "investigation": {
       "id": "investigation",
-      "x": 2300,
+      "x": 2050,
       "y": 2000,
       "category": "investigation",
       "icon": "EyeOff",
       "iconColor": "text-red-500",
-      "title": "ACS Investigation",
-      "description": "A CPS caseworker is assigned and must begin within 24 hours. Over the following 60 days, they will conduct unannounced home visits, inspect living conditions, interview your children alone without your presence, contact their school, and potentially order drug tests. You have no right to an attorney at this stage.",
+      "title": "Traditional ACS Investigation",
+      "description": "A formal 60-day investigation reviewing home conditions, nutrition, medical/educational neglect, and substance use.",
       "choices": [
-        { "text": "Investigation concludes — finding issued", "nextNodeId": "determination" }
+        { "text": "Await Finding", "nextNodeId": "determination" }
       ],
-      "statisticIds": ["investigation-race-rates"]
+      "statisticIds": ["safety-warrant-rate", "investigation-race-rates", "safety-investigator-quotes"]
     },
-
     "determination": {
       "id": "determination",
-      "x": 2950,
+      "x": 2700,
       "y": 2000,
       "category": "investigation",
       "icon": "Scale",
-      "iconColor": "text-neutral-600",
+      "iconColor": "text-red-500",
       "title": "Investigation Finding",
-      "description": "After 60 days, the ACS caseworker files their report. Every case is classified as either \"Unfounded\" — insufficient evidence of maltreatment — or \"Indicated\" — meaning ACS believes maltreatment occurred. The threshold for \"Indicated\" is not proof beyond a reasonable doubt; it requires only \"some credible evidence.\"",
+      "description": "ACS determines the outcome. It can be 'Indicated' (requires only some credible evidence) or 'Unfounded'.",
       "choices": [
-        { "text": "\"Unfounded\" — insufficient evidence, case closed", "nextNodeId": "unsubstantiated" },
-        { "text": "\"Indicated\" — ACS pursues case plan or court", "nextNodeId": "case_plan" }
+        { "text": "Unfounded", "nextNodeId": "unsubstantiated" },
+        { "text": "Indicated", "nextNodeId": "case_plan" }
       ],
       "statisticIds": ["determination-dragnet", "determination-record"]
     },
-
     "unsubstantiated": {
       "id": "unsubstantiated",
-      "x": 2950,
-      "y": 700,
+      "x": 3350,
+      "y": 800,
       "category": "neutral",
       "icon": "CheckCircle2",
       "iconColor": "text-neutral-500",
       "title": "Case Closed — Unfounded",
-      "description": "After 60 days of investigation, ACS found insufficient evidence of maltreatment. The case is marked \"Unfounded\" and closed. You may be offered optional community-based services. The investigation is over — but the trauma of surveillance, unannounced home visits, and your children being questioned cannot be undone.",
+      "description": "The investigation yielded no credible evidence. The case is closed, sometimes with a referral for voluntary services.",
       "choices": [],
       "statisticIds": []
     },
-
     "case_plan": {
       "id": "case_plan",
-      "x": 3600,
+      "x": 3350,
       "y": 2000,
       "category": "investigation",
       "icon": "ClipboardList",
       "iconColor": "text-orange-500",
       "title": "Voluntary Service Agreement",
-      "description": "ACS offers a \"voluntary\" service plan: parenting classes, counseling, drug testing, housing referrals. Signing it is presented as an alternative to going to court. But it is a trap — refusing services is routinely cited as evidence of non-cooperation and used to justify filing a court petition.",
+      "description": "Family is asked to comply with a service plan. Refusal can be used as evidence of non-cooperation.",
       "choices": [
-        { "text": "ACS determines court involvement is necessary", "nextNodeId": "court_filing" }
+        { "text": "File Petition", "nextNodeId": "court_filing" }
       ],
       "statisticIds": ["case-plan-coercion"]
     },
-
     "court_filing": {
       "id": "court_filing",
-      "x": 4250,
+      "x": 4000,
       "y": 2000,
       "category": "court",
       "icon": "FileCheck",
-      "iconColor": "text-red-600",
+      "iconColor": "text-red-500",
       "title": "ACS Files a Court Petition",
-      "description": "Despite your compliance, ACS files an Article 10 petition in Family Court under the Family Court Act, alleging child neglect or abuse. You receive notice — often the night before your first court date. The state is now your legal adversary. If you cannot afford a private attorney, you will be assigned one.",
+      "description": "ACS files an Article 10 petition in Family Court, formally accusing the parent of abuse or neglect.",
       "choices": [
-        { "text": "Case proceeds to family court hearing", "nextNodeId": "court_hearing" }
+        { "text": "To Hearing", "nextNodeId": "court_hearing" }
       ],
-      "statisticIds": ["court-geography"]
+      "statisticIds": ["court-duration"]
     },
-
     "court_hearing": {
       "id": "court_hearing",
-      "x": 4900,
+      "x": 4650,
       "y": 2000,
       "category": "court",
       "icon": "Scale",
-      "iconColor": "text-red-700",
+      "iconColor": "text-red-500",
       "title": "Family Court Hearing",
-      "description": "The courtroom is crowded with families — almost all Black and Latino. Individual hearings often last under 30 minutes. Families frequently meet their assigned attorney for the first time minutes before their case is called. The judge will decide whether your child remains at home under supervision or is removed.",
+      "description": "A judge reviews the case to determine whether to mandate supervision or order the removal of the child.",
       "choices": [
-        { "text": "Judge orders supervision — child stays home", "nextNodeId": "supervision_order" },
-        { "text": "Judge orders removal — child taken into ACS custody", "nextNodeId": "foster_care_removal" }
+        { "text": "Supervision Order", "nextNodeId": "supervision_order" },
+        { "text": "Child Removed", "nextNodeId": "foster_care_removal" }
       ],
-      "statisticIds": ["court-marianna", "court-duration"]
+      "statisticIds": ["court-geography", "court-marianna"]
     },
-
     "supervision_order": {
       "id": "supervision_order",
-      "x": 5550,
-      "y": 1100,
+      "x": 5300,
+      "y": 2000,
       "category": "court",
       "icon": "Home",
       "iconColor": "text-orange-500",
       "title": "Court Supervision Order",
-      "description": "Your child stays in your home — for now. The court issues a supervision order: ACS will conduct monthly home visits, you must complete all court-mandated services, and any perceived non-compliance can restart the cycle. The case will remain active until a judge agrees it is closed.",
+      "description": "The child remains home, but the family must strictly comply with a court-ordered service plan and ACS monitoring.",
       "choices": [],
       "statisticIds": ["supervision-renewal"]
     },
-
     "foster_care_removal": {
       "id": "foster_care_removal",
-      "x": 5550,
-      "y": 2950,
+      "x": 4650,
+      "y": 3200,
       "category": "court",
       "icon": "AlertTriangle",
-      "iconColor": "text-red-800",
-      "title": "Child Removed — Placed in ACS Custody",
-      "description": "The judge issues an order of placement. Your child is removed from your home and transported to an ACS intake center. You are not present during this process. From here, ACS determines where your child will live — with a relative, a foster family, or in a group home. Visitation is determined by the court.",
+      "iconColor": "text-red-500",
+      "title": "Child Removed",
+      "description": "The child is removed from the home and placed into the physical and legal custody of ACS.",
       "choices": [
-        { "text": "Relative caregiver available — kinship placement", "nextNodeId": "kinship_placement" },
-        { "text": "No relative available — institutional or foster placement", "nextNodeId": "group_home" }
+        { "text": "Kinship Placement", "nextNodeId": "kinship_placement" },
+        { "text": "Group Home", "nextNodeId": "group_home" }
       ],
-      "statisticIds": ["removal-cost", "removal-marginal-cases"]
+      "statisticIds": ["removal-marginal-cases", "removal-cost"]
     },
-
     "kinship_placement": {
       "id": "kinship_placement",
-      "x": 6200,
-      "y": 2400,
+      "x": 5300,
+      "y": 3200,
       "category": "court",
       "icon": "Heart",
       "iconColor": "text-pink-500",
       "title": "Kinship Placement",
-      "description": "Your child is placed with a relative or close family friend — a grandparent, aunt, uncle, or trusted adult known to the child. This is the legally preferred placement option. Your child is in a familiar environment, but they are still separated from you. Court-ordered visitation typically means a few supervised hours per week.",
+      "description": "The child is placed with a relative or close family friend. This is the preferred outcome when removal occurs.",
       "choices": [],
       "statisticIds": ["kinship-support-gap"]
     },
-
     "group_home": {
       "id": "group_home",
-      "x": 6200,
-      "y": 3550,
+      "x": 5950,
+      "y": 3200,
       "category": "court",
       "icon": "Building2",
-      "iconColor": "text-red-700",
-      "title": "Foster Care or Group Home Placement",
-      "description": "No suitable family placement was identified. Your child is placed in a licensed foster home with strangers, or in congregate care — a group home or residential facility. They will attend a new school and may be placed anywhere in the five boroughs, far from your neighborhood, support network, and community.",
+      "iconColor": "text-red-500",
+      "title": "Residential / Foster Placement",
+      "description": "The child is placed in a traditional foster home or a residential group facility.",
       "choices": [],
       "statisticIds": ["group-home-outcomes", "group-home-placement-instability"]
     },
 
     "fork": {
       "id": "fork",
-      "nodeType": "hidden",
-      "parentPrimaryId": "scr_screening",
-      "x": 1325,
+      "x": 750,
       "y": 2450,
-      "category": "neutral",
+      "category": "hotline",
       "icon": "Users",
-      "iconColor": "text-blue-500",
-      "title": "Report to ACS",
-      "description": "The report has been screened in and forwarded to the Administration for Children's Services (ACS). ACS collects information to identify and locate your child: age, sex, primary language, nature and extent of any injuries, type of alleged abuse or neglect, and any prior history of reports. Your family's information is now in the system.",
-      "choices": [
-        { "text": "ACS begins the Safety Assessment process", "nextNodeId": "safety_assessment" }
-      ],
-      "statisticIds": []
+      "iconColor": "text-amber-500",
+      "title": "ACS Intake Details",
+      "description": "Investigators collect names, addresses, primary languages, injuries, and prior history to build the case file.",
+      "choices": [],
+      "statisticIds": [],
+      "nodeType": "hidden",
+      "parentPrimaryId": "scr_screening"
     },
 
     "cares_entry": {
       "id": "cares_entry",
-      "nodeType": "hidden",
-      "parentPrimaryId": "cares_track",
-      "x": 2300,
+      "x": 2050,
       "y": 1350,
       "category": "cares",
       "icon": "Users",
-      "iconColor": "text-green-500",
-      "title": "Classified as CARES — Family Must Agree",
-      "description": "SCR classifies your report as CARES and opens a record that will be kept for 10 years. The caseworker presents CARES as \"voluntary\" and \"family-led.\" However, to enter the program you must agree to allow the caseworker into your home and to speak with your child. CARES is advertised as supportive, but if parents refuse certain demands — like a home visit — there is a high likelihood the case will be routed back into a Traditional Investigation, revealing its underlying coercive dynamics.",
-      "choices": [
-        { "text": "Agree to participate in CARES", "nextNodeId": "cares_main" },
-        { "text": "Refuse to allow caseworker into your home", "nextNodeId": "traditional_investigation_loop" }
-      ],
-      "statisticIds": []
+      "iconColor": "text-amber-500",
+      "title": "FAR Screening & Entry",
+      "description": "If assessed safe and the family agrees, the case formally enters the Family Assessment Response (CARES) pathway.",
+      "choices": [],
+      "statisticIds": [],
+      "nodeType": "hidden",
+      "parentPrimaryId": "cares_track"
     },
-
     "cares_main": {
       "id": "cares_main",
-      "nodeType": "hidden",
-      "parentPrimaryId": "cares_track",
-      "x": 2950,
+      "x": 2400,
       "y": 1350,
       "category": "cares",
       "icon": "Users",
-      "iconColor": "text-green-600",
-      "title": "Entering CARES",
-      "description": "You are now in the CARES program. Unlike a traditional investigation, caseworker visits are scheduled in advance and interviews with family contacts are conducted in partnership with the family. There is no formal determination of whether child maltreatment occurred. However, ACS retains the right to switch your case back to Traditional Investigation at any time if they identify a \"new safety concern.\" While CARES makes no formal finding of maltreatment, ACS still enters your family's information into the system, which is retained for 10 years.",
-      "choices": [
-        { "text": "Proceed to Family-Led Assessment", "nextNodeId": "family_led_assessment" }
-      ],
-      "statisticIds": []
+      "iconColor": "text-amber-500",
+      "title": "CARES Process",
+      "description": "Visits are scheduled in advance. There is no formal determination of maltreatment or fault.",
+      "choices": [],
+      "statisticIds": [],
+      "nodeType": "hidden",
+      "parentPrimaryId": "cares_track"
     },
-
     "family_led_assessment": {
       "id": "family_led_assessment",
-      "nodeType": "hidden",
-      "parentPrimaryId": "cares_track",
-      "x": 3600,
+      "x": 2750,
       "y": 1350,
       "category": "cares",
       "icon": "ClipboardList",
-      "iconColor": "text-teal-500",
+      "iconColor": "text-amber-500",
       "title": "Family-Led Assessment",
-      "description": "A caseworker conducts a Family-Led Assessment using the FLAG (Family-Led Assessment Guide). Together, you are supposed to identify your family's strengths, wants, concerns, and needs, and map out a plan for family stabilization. In practice, the caseworker's perspective significantly shapes what gets recorded.",
-      "choices": [
-        { "text": "Proceed to CARES Service Plan", "nextNodeId": "service_plan_cares" }
-      ],
-      "statisticIds": []
+      "description": "Using the Family-Led Assessment Guide (FLAG) to look at the family's strengths, wants, and concrete needs.",
+      "choices": [],
+      "statisticIds": [],
+      "nodeType": "hidden",
+      "parentPrimaryId": "cares_track"
     },
-
     "service_plan_cares": {
       "id": "service_plan_cares",
-      "nodeType": "hidden",
-      "parentPrimaryId": "cares_track",
-      "x": 4250,
+      "x": 3100,
       "y": 1350,
       "category": "cares",
       "icon": "FileCheck",
-      "iconColor": "text-teal-600",
-      "title": "CARES Service Plan",
-      "description": "Based on the assessment, ACS develops a service plan for your family. This may include parenting sessions, counseling for stress or anxiety, child care planning with neighbors or family, enrollment in after-school programs, or referrals to local food pantries. Completion of this plan is tracked by ACS. CARES services are meant to support families, but participation is actively monitored. Failure to engage — or any new concern raised during the service period — can result in the case being escalated to Traditional Investigation.",
-      "choices": [
-        { "text": "Complete service plan — case closed after 60 days", "nextNodeId": "cares_success" }
-      ],
-      "statisticIds": []
+      "iconColor": "text-green-500",
+      "title": "Collaborative Support Plan",
+      "description": "Connecting the family with parenting sessions, child care plans, after-school programs, or food pantries.",
+      "choices": [],
+      "statisticIds": [],
+      "nodeType": "hidden",
+      "parentPrimaryId": "cares_track"
     },
-
     "cares_success": {
       "id": "cares_success",
-      "nodeType": "hidden",
-      "parentPrimaryId": "cares_track",
-      "x": 4900,
+      "x": 3450,
       "y": 1350,
       "category": "cares",
       "icon": "CheckCircle2",
-      "iconColor": "text-green-700",
-      "title": "Case Closed After 60 Days",
-      "description": "You cooperated with all assessments and completed the service plan. After 60 days, your CARES case is officially closed. You may be referred to optional community-based preventive services. Although your family was not separated, you endured weeks of monitoring and home visits — and your family's record now exists in the ACS system for the next 10 years.",
+      "iconColor": "text-green-500",
+      "title": "Case Closed (60 Days)",
+      "description": "The CARES track naturally concludes and closes after 60 days if no new safety concerns arise.",
       "choices": [],
-      "statisticIds": []
+      "statisticIds": [],
+      "nodeType": "hidden",
+      "parentPrimaryId": "cares_track"
     },
-
     "traditional_investigation_loop": {
       "id": "traditional_investigation_loop",
-      "nodeType": "hidden",
-      "parentPrimaryId": "cares_track",
-      "x": 1700,
-      "y": 1350,
+      "x": 2400,
+      "y": 1650,
       "category": "warning",
       "icon": "AlertTriangle",
-      "iconColor": "text-amber-500",
-      "title": "The System's Trap — Routed Back",
-      "description": "Because you exercised your right to deny a stranger entry into your home, the system deemed you \"uncooperative\" or a \"potential risk.\" Your case is immediately switched back to a punitive Traditional Investigation. CARES is advertised as voluntary and supportive, but if parents refuse certain demands, there is a high likelihood the case will be routed back into investigation, revealing its underlying coercive and surveillance dynamics.",
-      "choices": [
-        { "text": "Forced into Traditional Investigation", "nextNodeId": "investigation" }
-      ],
-      "statisticIds": []
+      "iconColor": "text-red-500",
+      "title": "New Safety Concern",
+      "description": "If a new concern arises during CARES, CPS can switch the case back to a traditional, formal investigation.",
+      "choices": [],
+      "statisticIds": [],
+      "nodeType": "hidden",
+      "parentPrimaryId": "cares_track"
     },
 
     "community_services": {
       "id": "community_services",
-      "nodeType": "hidden",
-      "parentPrimaryId": "unsubstantiated",
-      "x": 3600,
-      "y": 700,
+      "x": 3700,
+      "y": 600,
       "category": "neutral",
       "icon": "Handshake",
       "iconColor": "text-blue-500",
-      "title": "Community-Based Services",
-      "description": "You are referred to optional, voluntary preventive services in your community — counseling, food pantry access, housing assistance referrals, or parenting support groups. No ACS caseworker is assigned. These are the kinds of resources that could have been offered from the very beginning, before any investigation ever began.",
+      "title": "Community Optional Services",
+      "description": "Referral to preventative services (COPS) for families at elevated risk, without formal case records.",
       "choices": [],
-      "statisticIds": []
+      "statisticIds": [],
+      "nodeType": "hidden",
+      "parentPrimaryId": "unsubstantiated"
     },
 
     "supervision_intake": {
       "id": "supervision_intake",
-      "nodeType": "hidden",
-      "parentPrimaryId": "supervision_order",
-      "x": 5250,
+      "x": 5300,
       "y": 1500,
       "category": "court",
       "icon": "Users",
       "iconColor": "text-orange-500",
-      "title": "Court Ordered Supervision — FSU Assigned",
-      "description": "Your child remains in your home — for now. The court assigns you an FSU (Family Services Unit) specialist and places you under court-ordered supervision. You must complete all court-mandated services, which may include parenting classes, drug testing, mental health treatment, and regular check-ins. Failure to comply can result in your child being removed.",
-      "choices": [
-        { "text": "Attempt to complete the court-mandated service plan", "nextNodeId": "court_service_plan" }
-      ],
-      "statisticIds": []
+      "title": "FSU Specialist Assigned",
+      "description": "A Family Service Unit specialist is assigned to monitor the family's compliance with court mandates.",
+      "choices": [],
+      "statisticIds": [],
+      "nodeType": "hidden",
+      "parentPrimaryId": "supervision_order"
     },
-
     "court_service_plan": {
       "id": "court_service_plan",
-      "nodeType": "hidden",
-      "parentPrimaryId": "supervision_order",
-      "x": 5900,
+      "x": 5650,
       "y": 1500,
       "category": "court",
       "icon": "FileCheck",
-      "iconColor": "text-orange-600",
-      "title": "Court-Mandated Service Plan",
-      "description": "You work through the court-mandated services assigned to you — attending every class, submitting to every test, appearing at every scheduled court date. Completion determines whether the court considers your case resolved or continues to escalate. Court hearings often last only 30 minutes, but the overall case can drag on for years due to scheduling delays, ever-expanding service requirements, and bureaucratic backlog.",
-      "choices": [
-        { "text": "Successful completion of all court mandates", "nextNodeId": "supervision_success" },
-        { "text": "Failure to meet court order requirements", "nextNodeId": "supervision_failure" }
-      ],
-      "statisticIds": []
+      "iconColor": "text-orange-500",
+      "title": "Mandated Service Plan",
+      "description": "Completion of clinical services, drug testing, or parental training under strict court deadlines.",
+      "choices": [],
+      "statisticIds": [],
+      "nodeType": "hidden",
+      "parentPrimaryId": "supervision_order"
     },
-
     "supervision_success": {
       "id": "supervision_success",
-      "nodeType": "hidden",
-      "parentPrimaryId": "supervision_order",
-      "x": 5250,
-      "y": 1900,
+      "x": 6000,
+      "y": 1500,
       "category": "court",
       "icon": "CheckCircle2",
-      "iconColor": "text-green-600",
-      "title": "Court Supervision Successfully Completed",
-      "description": "You completed every requirement — every class, every drug test, every appointment. The court closes your case. Your family survived the system, but the emotional toll of missed work, public scrutiny, and years of mandatory compliance cannot be undone.",
+      "iconColor": "text-green-500",
+      "title": "Successful Completion",
+      "description": "The court order is satisfied and ACS supervision is terminated.",
       "choices": [],
-      "statisticIds": []
+      "statisticIds": [],
+      "nodeType": "hidden",
+      "parentPrimaryId": "supervision_order"
     },
-
     "supervision_failure": {
       "id": "supervision_failure",
-      "nodeType": "hidden",
-      "parentPrimaryId": "supervision_order",
-      "x": 5900,
-      "y": 1900,
-      "category": "court",
+      "x": 5650,
+      "y": 1800,
+      "category": "warning",
       "icon": "AlertTriangle",
-      "iconColor": "text-orange-600",
-      "title": "Failed to Meet Court Order",
-      "description": "Despite your efforts, you could not complete all court-mandated requirements — perhaps due to work conflicts, transportation barriers, or inability to afford co-pays for required services. The court refers you to Mandated Preventive Services. This is not voluntary. Continued non-compliance could still result in your child's removal.",
-      "choices": [
-        { "text": "Referred to Mandated Preventive Services", "nextNodeId": "mandated_preventive" }
-      ],
-      "statisticIds": []
+      "iconColor": "text-red-500",
+      "title": "Failure to Comply",
+      "description": "Failing to meet the court order can result in escalation, including immediate child removal.",
+      "choices": [],
+      "statisticIds": [],
+      "nodeType": "hidden",
+      "parentPrimaryId": "supervision_order"
     },
-
     "mandated_preventive": {
       "id": "mandated_preventive",
-      "nodeType": "hidden",
-      "parentPrimaryId": "supervision_order",
-      "x": 5900,
-      "y": 2300,
+      "x": 5300,
+      "y": 2400,
       "category": "court",
       "icon": "Handshake",
-      "iconColor": "text-red-500",
+      "iconColor": "text-blue-500",
       "title": "Mandated Preventive Services",
-      "description": "You are enrolled in intensive, court-ordered preventive services: (1) Intensive Home-Based Family Preservation Services — short-term crisis intervention with 24/7 caseworker availability; (2) Preventive Housing Services — financial assistance for families at risk of losing their housing; (3) Respite Care — temporary childcare relief for parents under acute stress. Caseworkers may be in the home multiple times per week. Families whose core problem is poverty, not parenting, are enrolled in intensive surveillance-driven programs rather than simply receiving direct financial support.",
+      "description": "Intensive preservation services, housing subsidies (rent arrears), or respite care to prevent removal.",
       "choices": [],
-      "statisticIds": []
+      "statisticIds": [],
+      "nodeType": "hidden",
+      "parentPrimaryId": "supervision_order"
     },
 
     "placement_decision": {
       "id": "placement_decision",
-      "nodeType": "hidden",
-      "parentPrimaryId": "foster_care_removal",
-      "x": 5550,
-      "y": 3400,
+      "x": 4650,
+      "y": 3500,
       "category": "court",
       "icon": "Heart",
       "iconColor": "text-pink-500",
-      "title": "Placement Decision: Kinship Available?",
-      "description": "At Nicholas Scoppetta Children's Center (NSCC), ACS and the court determine the most appropriate placement for your child. The first question: is there a family member or close family friend — a \"kinship\" caregiver — who has been approved to take your child? Kinship care is the legally preferred placement option under New York law.",
-      "choices": [
-        { "text": "Yes — kinship caregiver available and approved", "nextNodeId": "kinship_foster_care" },
-        { "text": "No — no suitable kinship caregiver identified", "nextNodeId": "medical_needs_decision" }
-      ],
-      "statisticIds": []
+      "title": "Kinship Available?",
+      "description": "The first assessment is whether a safe relative or family friend is available to take the child.",
+      "choices": [],
+      "statisticIds": [],
+      "nodeType": "hidden",
+      "parentPrimaryId": "foster_care_removal"
     },
-
     "kinship_foster_care": {
       "id": "kinship_foster_care",
-      "nodeType": "hidden",
-      "parentPrimaryId": "foster_care_removal",
-      "x": 4900,
-      "y": 3800,
+      "x": 5000,
+      "y": 3500,
       "category": "court",
       "icon": "Heart",
-      "iconColor": "text-pink-600",
-      "title": "Kinship Foster Care (Preferred Placement)",
-      "description": "Your child is placed with a relative or close family friend — a grandparent, aunt, uncle, or trusted family friend known to the child. This is the legally preferred placement under New York law. While your child remains separated from you, they are in a familiar environment. Visitation is permitted, but only under court-determined conditions. Kinship caregivers often receive less financial support and fewer services than licensed foster families, and approval processes can disqualify willing family members on technical grounds.",
+      "iconColor": "text-pink-500",
+      "title": "Kinship Foster Care",
+      "description": "Child is placed with known kin, maintaining family ties.",
       "choices": [],
-      "statisticIds": []
+      "statisticIds": [],
+      "nodeType": "hidden",
+      "parentPrimaryId": "foster_care_removal"
     },
-
     "medical_needs_decision": {
       "id": "medical_needs_decision",
-      "nodeType": "hidden",
-      "parentPrimaryId": "foster_care_removal",
-      "x": 6050,
+      "x": 4650,
       "y": 3800,
       "category": "court",
       "icon": "Stethoscope",
-      "iconColor": "text-blue-600",
-      "title": "Does Your Child Have Complex Medical Needs?",
-      "description": "ACS evaluates your child's health and developmental profile at NSCC. Children with significant medical conditions require foster families with specialized training and resources — not all licensed foster homes are equipped to provide this level of care.",
-      "choices": [
-        { "text": "Yes — child has complex medical needs", "nextNodeId": "specialized_foster_care" },
-        { "text": "No — no complex medical needs identified", "nextNodeId": "trauma_decision" }
-      ],
-      "statisticIds": []
+      "iconColor": "text-red-500",
+      "title": "Complex Medical Needs?",
+      "description": "If no kinship is available, assessors check if the child requires intensive medical care.",
+      "choices": [],
+      "statisticIds": [],
+      "nodeType": "hidden",
+      "parentPrimaryId": "foster_care_removal"
     },
-
     "specialized_foster_care": {
       "id": "specialized_foster_care",
-      "nodeType": "hidden",
-      "parentPrimaryId": "foster_care_removal",
-      "x": 5550,
-      "y": 4200,
+      "x": 5000,
+      "y": 3800,
       "category": "court",
       "icon": "Stethoscope",
-      "iconColor": "text-blue-700",
-      "title": "Specialized / Medical Foster Care",
-      "description": "Your child is placed in a foster home with a caregiver specifically trained and certified to provide medical care. These placements are rarer and may require your child to be placed further from your neighborhood or support network, making regular visitation significantly more difficult.",
+      "iconColor": "text-red-500",
+      "title": "Specialized / Medical Care",
+      "description": "Placement equipped for significant medical interventions.",
       "choices": [],
-      "statisticIds": []
+      "statisticIds": [],
+      "nodeType": "hidden",
+      "parentPrimaryId": "foster_care_removal"
     },
-
     "trauma_decision": {
       "id": "trauma_decision",
-      "nodeType": "hidden",
-      "parentPrimaryId": "foster_care_removal",
-      "x": 6500,
-      "y": 4200,
+      "x": 4650,
+      "y": 4100,
       "category": "court",
       "icon": "Brain",
-      "iconColor": "text-purple-600",
-      "title": "Significant Trauma or Behavioral Needs?",
-      "description": "ACS assesses whether your child has experienced significant trauma or has complex behavioral or emotional needs — conditions that are common outcomes of the removal process itself. Research consistently shows that the act of removal itself is traumatic for children — often more so than the situation that prompted the report. Children who exhibit these needs require Enhanced Family Foster Care (EFFC), which provides specialized therapeutic support.",
-      "choices": [
-        { "text": "Yes — significant trauma or behavioral needs identified", "nextNodeId": "effc" },
-        { "text": "No — no significant trauma or behavioral needs", "nextNodeId": "family_setting_decision" }
-      ],
-      "statisticIds": []
+      "iconColor": "text-red-500",
+      "title": "Behavioral Needs?",
+      "description": "Assessors check for significant trauma or behavioral challenges.",
+      "choices": [],
+      "statisticIds": [],
+      "nodeType": "hidden",
+      "parentPrimaryId": "foster_care_removal"
     },
-
     "effc": {
       "id": "effc",
-      "nodeType": "hidden",
-      "parentPrimaryId": "foster_care_removal",
-      "x": 6050,
-      "y": 4600,
+      "x": 5000,
+      "y": 4100,
       "category": "court",
       "icon": "Brain",
-      "iconColor": "text-purple-700",
-      "title": "Enhanced Family Foster Care (EFFC)",
-      "description": "Your child is placed in an Enhanced Family Foster Care setting — a foster home where the caregiver has received additional training in trauma-informed care and therapeutic techniques. EFFC provides more intensive support, but your child is still in a stranger's home, separated from you. The removal was frequently a response to poverty, not abuse. EFFC addresses trauma that the system itself caused.",
+      "iconColor": "text-red-500",
+      "title": "Enhanced Family Foster Care",
+      "description": "EFFC provides elevated behavioral support within a family-like setting.",
       "choices": [],
-      "statisticIds": []
+      "statisticIds": [],
+      "nodeType": "hidden",
+      "parentPrimaryId": "foster_care_removal"
     },
-
     "family_setting_decision": {
       "id": "family_setting_decision",
-      "nodeType": "hidden",
-      "parentPrimaryId": "foster_care_removal",
-      "x": 6500,
-      "y": 4600,
+      "x": 4650,
+      "y": 4400,
       "category": "court",
       "icon": "Home",
-      "iconColor": "text-orange-500",
-      "title": "Can Your Child Be Placed in a Family Setting?",
-      "description": "ACS evaluates whether a traditional family foster home is appropriate. A family setting — a private home with a licensed foster parent — is strongly preferred over institutional or congregate care for children's wellbeing and long-term developmental outcomes.",
-      "choices": [
-        { "text": "Yes — traditional family foster home is viable", "nextNodeId": "traditional_foster_care_node" },
-        { "text": "No — no suitable family setting identified", "nextNodeId": "residential_placement" }
-      ],
-      "statisticIds": []
+      "iconColor": "text-red-500",
+      "title": "Family Setting Viability?",
+      "description": "Is a traditional home setting viable for the child's profile?",
+      "choices": [],
+      "statisticIds": [],
+      "nodeType": "hidden",
+      "parentPrimaryId": "foster_care_removal"
     },
-
     "traditional_foster_care_node": {
       "id": "traditional_foster_care_node",
-      "nodeType": "hidden",
-      "parentPrimaryId": "foster_care_removal",
-      "x": 6050,
-      "y": 5000,
+      "x": 5000,
+      "y": 4400,
       "category": "court",
       "icon": "Home",
-      "iconColor": "text-orange-600",
-      "title": "Traditional Foster Care (Private Residence)",
-      "description": "Your child is placed in a licensed foster family's private home. The foster family is compensated by the state. Your child will attend a new school, live with strangers, and may be placed anywhere in the five boroughs. Visitation with you is determined by the court — typically a few supervised hours per week. New York City spends tens of thousands of dollars per child per year on foster care — studies show that providing direct financial support to struggling families costs a fraction of this, and produces far better outcomes for children.",
+      "iconColor": "text-red-500",
+      "title": "Traditional Foster Care",
+      "description": "Placement with a licensed private foster family.",
       "choices": [],
-      "statisticIds": []
+      "statisticIds": [],
+      "nodeType": "hidden",
+      "parentPrimaryId": "foster_care_removal"
     },
-
     "residential_placement": {
       "id": "residential_placement",
-      "nodeType": "hidden",
-      "parentPrimaryId": "foster_care_removal",
-      "x": 6500,
-      "y": 5000,
+      "x": 4650,
+      "y": 4700,
       "category": "court",
       "icon": "Building2",
-      "iconColor": "text-red-700",
-      "title": "Residential Placement (Group Home)",
-      "description": "No suitable family foster home was identified for your child. They are placed in a congregate care facility — a group home or residential placement. Research consistently shows that children in residential placements face worse outcomes than those in family-based care: higher rates of re-entry into foster care, worse mental health outcomes, and greater risk of homelessness upon aging out of the system. New York has been under federal scrutiny for over-use of congregate care.",
+      "iconColor": "text-red-500",
+      "title": "Residential Group Home",
+      "description": "If family settings are not viable, the child is placed in institutional congregate care.",
       "choices": [],
-      "statisticIds": []
+      "statisticIds": [],
+      "nodeType": "hidden",
+      "parentPrimaryId": "foster_care_removal"
     }
-
   },
-
   "edges": [
-    { "from": "start",               "to": "scr_screening" },
-    { "from": "scr_screening",       "to": "screened_out" },
-    { "from": "scr_screening",       "to": "safety_assessment" },
-    { "from": "safety_assessment",   "to": "cares_track" },
-    { "from": "safety_assessment",   "to": "investigation" },
-    { "from": "cares_track",         "to": "investigation" },
-    { "from": "investigation",       "to": "determination" },
-    { "from": "determination",       "to": "unsubstantiated" },
-    { "from": "determination",       "to": "case_plan" },
-    { "from": "case_plan",           "to": "court_filing" },
-    { "from": "court_filing",        "to": "court_hearing" },
-    { "from": "court_hearing",       "to": "supervision_order" },
-    { "from": "court_hearing",       "to": "foster_care_removal" },
+    { "from": "start", "to": "scr_screening" },
+    { "from": "scr_screening", "to": "screened_out" },
+    { "from": "scr_screening", "to": "safety_assessment" },
+    { "from": "safety_assessment", "to": "cares_track" },
+    { "from": "safety_assessment", "to": "investigation" },
+    { "from": "investigation", "to": "determination" },
+    { "from": "determination", "to": "unsubstantiated" },
+    { "from": "determination", "to": "case_plan" },
+    { "from": "case_plan", "to": "court_filing" },
+    { "from": "court_filing", "to": "court_hearing" },
+    { "from": "court_hearing", "to": "supervision_order" },
+    { "from": "court_hearing", "to": "foster_care_removal" },
     { "from": "foster_care_removal", "to": "kinship_placement" },
     { "from": "foster_care_removal", "to": "group_home" },
 
-    { "from": "scr_screening",                "to": "fork" },
-    { "from": "fork",                         "to": "safety_assessment" },
+    { "from": "scr_screening", "to": "fork" },
 
-    { "from": "cares_track",                  "to": "cares_entry" },
-    { "from": "cares_entry",                  "to": "cares_main" },
-    { "from": "cares_entry",                  "to": "traditional_investigation_loop" },
-    { "from": "cares_main",                   "to": "family_led_assessment" },
-    { "from": "family_led_assessment",        "to": "service_plan_cares" },
-    { "from": "service_plan_cares",           "to": "cares_success" },
+    { "from": "cares_track", "to": "cares_entry" },
+    { "from": "cares_entry", "to": "cares_main" },
+    { "from": "cares_main", "to": "family_led_assessment" },
+    { "from": "family_led_assessment", "to": "service_plan_cares" },
+    { "from": "service_plan_cares", "to": "cares_success" },
+    { "from": "cares_main", "to": "traditional_investigation_loop" },
     { "from": "traditional_investigation_loop", "to": "investigation" },
 
-    { "from": "unsubstantiated",              "to": "community_services" },
+    { "from": "unsubstantiated", "to": "community_services" },
 
-    { "from": "supervision_order",            "to": "supervision_intake" },
-    { "from": "supervision_intake",           "to": "court_service_plan" },
-    { "from": "court_service_plan",           "to": "supervision_success" },
-    { "from": "court_service_plan",           "to": "supervision_failure" },
-    { "from": "supervision_failure",          "to": "mandated_preventive" },
+    { "from": "supervision_order", "to": "supervision_intake" },
+    { "from": "supervision_intake", "to": "court_service_plan" },
+    { "from": "court_service_plan", "to": "supervision_success" },
+    { "from": "court_service_plan", "to": "supervision_failure" },
+    { "from": "supervision_order", "to": "mandated_preventive" },
 
-    { "from": "foster_care_removal",          "to": "placement_decision" },
-    { "from": "placement_decision",           "to": "kinship_foster_care" },
-    { "from": "placement_decision",           "to": "medical_needs_decision" },
-    { "from": "medical_needs_decision",       "to": "specialized_foster_care" },
-    { "from": "medical_needs_decision",       "to": "trauma_decision" },
-    { "from": "trauma_decision",              "to": "effc" },
-    { "from": "trauma_decision",              "to": "family_setting_decision" },
-    { "from": "family_setting_decision",      "to": "traditional_foster_care_node" },
-    { "from": "family_setting_decision",      "to": "residential_placement" }
+    { "from": "foster_care_removal", "to": "placement_decision" },
+    { "from": "placement_decision", "to": "kinship_foster_care" },
+    { "from": "placement_decision", "to": "medical_needs_decision" },
+    { "from": "medical_needs_decision", "to": "specialized_foster_care" },
+    { "from": "medical_needs_decision", "to": "trauma_decision" },
+    { "from": "trauma_decision", "to": "effc" },
+    { "from": "trauma_decision", "to": "family_setting_decision" },
+    { "from": "family_setting_decision", "to": "traditional_foster_care_node" },
+    { "from": "family_setting_decision", "to": "residential_placement" }
   ]
 }

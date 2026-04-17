@@ -1,30 +1,9 @@
 {
-  "start-pipeline": {
-    "id": "start-pipeline",
-    "nodeId": "start",
-    "sources": [
-      { "label": "NYC ACS Annual Report 2023" },
-      { "label": "OCFS Statewide Central Register Data" }
-    ],
-    "chart": {
-      "type": "pipeline",
-      "label": "From Call to Removal — NYC, 2023",
-      "stages": [
-        { "label": "SCR Hotline Calls",    "pct": 100, "color": "neutral", "note": "95,590" },
-        { "label": "Passed to Agencies",   "pct": 75,  "color": "neutral", "note": "75%" },
-        { "label": "Formal Investigation", "pct": 53,  "color": "amber",   "note": "~53%" },
-        { "label": "CARES Track",          "pct": 22,  "color": "amber",   "note": "22%" },
-        { "label": "Indicated",            "pct": 17,  "color": "red",     "note": "~17%" },
-        { "label": "Children Removed",     "pct": 8,   "color": "red",     "note": "~8%" }
-      ]
-    }
-  },
-
   "start-scr-counter": {
     "id": "start-scr-counter",
     "nodeId": "start",
     "sources": [
-      { "label": "OCFS Annual Report 2023" }
+      { "label": "NYC ACS Annual Report 2023" }
     ],
     "chart": {
       "type": "two-counter",
@@ -41,6 +20,27 @@
         "accentColor": "neutral"
       },
       "note": "Over 73,000 families were investigated and found to have done nothing wrong."
+    }
+  },
+
+  "start-pipeline": {
+    "id": "start-pipeline",
+    "nodeId": "start",
+    "sources": [
+      { "label": "NYC ACS Annual Report 2023" },
+      { "label": "OCFS Statewide Central Register Data" }
+    ],
+    "chart": {
+      "type": "pipeline",
+      "label": "From Call to Removal — NYC, 2023",
+      "stages": [
+        { "label": "SCR Hotline Calls",    "pct": 100, "color": "neutral", "note": "95,590" },
+        { "label": "Passed to Agencies",   "pct": 75,  "color": "neutral", "note": "75%" },
+        { "label": "Formal Investigation", "pct": 53,  "color": "amber",   "note": "~53%" },
+        { "label": "CARES Track",          "pct": 22,  "color": "amber",   "note": "22%" },
+        { "label": "Indicated (Substantiated)", "pct": 17, "color": "red", "note": "~17%" },
+        { "label": "Children Removed",     "pct": 8,   "color": "red",     "note": "~8%" }
+      ]
     }
   },
 
@@ -85,7 +85,7 @@
         "value": "22.5%",
         "postValue": "substantiated"
       },
-      "note": "Both families receive an investigator at the door."
+      "note": "Both families receive an investigator at the door regardless of the source."
     }
   },
 
@@ -147,7 +147,7 @@
 
   "safety-warrant-rate": {
     "id": "safety-warrant-rate",
-    "nodeId": "safety_assessment",
+    "nodeId": "investigation",
     "sources": [
       { "label": "NYC ACS records, 2010–2020" },
       { "label": "Bronx Defenders client data" }
@@ -165,19 +165,38 @@
     }
   },
 
+  "investigation-race-rates": {
+    "id": "investigation-race-rates",
+    "nodeId": "investigation",
+    "sources": [
+      { "label": "Fong et al., 2021 / NYC ACS Data" },
+      { "label": "Center for the Study of Social Policy" }
+    ],
+    "chart": {
+      "type": "horizontal-bars",
+      "label": "% of Children Investigated by ACS by Age 18 (2021)",
+      "bars": [
+        { "label": "Black children",  "pct": 44, "accentColor": "red" },
+        { "label": "Latino children", "pct": 43, "accentColor": "amber" },
+        { "label": "White children",  "pct": 19, "accentColor": "neutral" }
+      ],
+      "callout": "A Black child in NYC has nearly a **50% chance** of being investigated by age 18."
+    }
+  },
+
   "safety-investigator-quotes": {
     "id": "safety-investigator-quotes",
-    "nodeId": "safety_assessment",
+    "nodeId": "investigation",
     "sources": [
       { "label": "Bronx Defenders, This Wound Is Still Fresh, 2023" }
     ],
     "chart": {
       "type": "quote-list",
-      "label": "Documented Investigator Tactics — Bronx Families",
+      "label": "Documented Coercive Tactics",
       "quotes": [
         { "text": "\"I'm not going to stop coming.\"" },
         { "text": "\"Why not, if you don't have anything to hide?\"" },
-        { "text": "\"We can do this the easy way or I can get a warrant.\"" }
+        { "text": "\"We can do this the easy way or I can get a warrant.\"", "attribution": "ACS investigator" }
       ],
       "note": "Documented tactics reported by ACS-investigated families in the Bronx. Families have no right to counsel at this stage."
     }
@@ -211,29 +230,11 @@
           ]
         }
       ],
+      "note": "While CARES has grown, it retains the capacity for coercive removal without judicial oversight.",
       "callout": {
         "text": "Reform in name. The pipeline remains.",
         "subtext": "\"CARES may function as another surveillance program.\" — The Bronx Defenders, This Wound Is Still Fresh"
       }
-    }
-  },
-
-  "investigation-race-rates": {
-    "id": "investigation-race-rates",
-    "nodeId": "investigation",
-    "sources": [
-      { "label": "NYC ACS Data Dashboard 2021" },
-      { "label": "Center for the Study of Social Policy" }
-    ],
-    "chart": {
-      "type": "horizontal-bars",
-      "label": "% of Children Investigated by ACS, 2021",
-      "bars": [
-        { "label": "Black children",  "pct": 44, "accentColor": "red" },
-        { "label": "Latino children", "pct": 43, "accentColor": "amber" },
-        { "label": "White children",  "pct": 19, "accentColor": "neutral" }
-      ],
-      "callout": "A Black child in NYC has nearly a **50% chance** of being investigated by age 18."
     }
   },
 
@@ -245,15 +246,15 @@
     ],
     "chart": {
       "type": "stacked-bars",
-      "label": "FY 2023 — What Follows a Report",
+      "label": "FY 2023 — The Dragnet",
       "leftLabel": "Indicated",
       "rightLabel": "unsubstantiated",
       "rows": [
-        { "label": "Black & Latino families", "leftPct": 18 },
-        { "label": "White families",           "leftPct": 24 },
-        { "label": "All families",             "leftPct": 23 }
+        { "label": "Black & Latino families", "leftPct": 22 },
+        { "label": "White families",           "leftPct": 26 },
+        { "label": "All families",             "leftPct": 23.1 }
       ],
-      "note": "In FY 2023, 56.6% of all intakes were unsubstantiated. The system is a high-volume, low-yield dragnet."
+      "note": "In FY 2023, 56.6% of all intakes were entirely unsubstantiated, yet families endured the full investigation process."
     }
   },
 
@@ -303,63 +304,9 @@
     }
   },
 
-  "court-geography": {
-    "id": "court-geography",
-    "nodeId": "court_filing",
-    "sources": [
-      { "label": "NYC Family Court Filing Data FY2023" },
-      { "label": "NYC 2020 Census — Median Household Income" }
-    ],
-    "chart": {
-      "type": "card-compare",
-      "variant": "district",
-      "label": "FY 2023 — Geography of Intervention",
-      "left": {
-        "name": "Highbridge / Concourse",
-        "subtitle": "South Bronx",
-        "code": "District BX04",
-        "accentColor": "red",
-        "rows": [
-          { "key": "SCR Intakes",        "value": "1,462" },
-          { "key": "Article X Filings",  "value": "149" },
-          { "key": "Median Income",      "value": "$28K" }
-        ]
-      },
-      "right": {
-        "name": "Park Slope",
-        "subtitle": "Brooklyn",
-        "code": "District BK06",
-        "accentColor": "neutral",
-        "rows": [
-          { "key": "SCR Intakes",        "value": "333" },
-          { "key": "Article X Filings",  "value": "14" },
-          { "key": "Median Income",      "value": "$112K" }
-        ]
-      },
-      "note": "Same system. Opposite outcomes."
-    }
-  },
-
-  "court-marianna": {
-    "id": "court-marianna",
-    "nodeId": "court_hearing",
-    "sources": [
-      { "label": "Bronx Defenders client documentation, 2022" }
-    ],
-    "chart": {
-      "type": "big-number",
-      "label": "A Direct and Documented Consequence",
-      "value": "2",
-      "unit": "nights in pain",
-      "accentColor": "neutral",
-      "description": "Marianna Azar refused opioid painkillers after abdominal surgery — not because of addiction, but because she feared ACS would interpret medication on her bedside table as evidence of substance abuse.",
-      "footer": "State-induced fear, documented by her attorney."
-    }
-  },
-
   "court-duration": {
     "id": "court-duration",
-    "nodeId": "court_hearing",
+    "nodeId": "court_filing",
     "sources": [
       { "label": "Bronx Defenders, 2023" },
       { "label": "NYC Family Court caseload data" }
@@ -379,6 +326,59 @@
         { "label": "Follow-up hearings",   "widthPct": 47, "accentColor": "red" }
       ],
       "note": "Each hearing lasts ~30 minutes. The case lasts months to years."
+    }
+  },
+
+  "court-geography": {
+    "id": "court-geography",
+    "nodeId": "court_hearing",
+    "sources": [
+      { "label": "NYC ACS FY 2023 Data / US Census" }
+    ],
+    "chart": {
+      "type": "card-compare",
+      "variant": "district",
+      "label": "FY 2023 — Geography of Intervention",
+      "left": {
+        "name": "Highbridge / Concourse",
+        "subtitle": "South Bronx",
+        "code": "District BX04",
+        "accentColor": "red",
+        "rows": [
+          { "key": "SCR Intakes",       "value": "1,462" },
+          { "key": "Article X Filings", "value": "149" },
+          { "key": "Median Income",     "value": "$28K" }
+        ]
+      },
+      "right": {
+        "name": "Park Slope",
+        "subtitle": "Brooklyn",
+        "code": "District BK06",
+        "accentColor": "neutral",
+        "rows": [
+          { "key": "SCR Intakes",       "value": "333" },
+          { "key": "Article X Filings", "value": "14" },
+          { "key": "Median Income",     "value": "$112K" }
+        ]
+      },
+      "note": "A map of structural disinvestment. Same system. Opposite outcomes."
+    }
+  },
+
+  "court-marianna": {
+    "id": "court-marianna",
+    "nodeId": "court_hearing",
+    "sources": [
+      { "label": "Bronx Defenders client documentation, 2022" }
+    ],
+    "chart": {
+      "type": "big-number",
+      "label": "A Direct and Documented Consequence",
+      "value": "2",
+      "unit": "nights in pain",
+      "accentColor": "neutral",
+      "description": "Marianna Azar refused opioid painkillers after abdominal surgery — not because of addiction, but because she feared ACS would interpret medication on her bedside table as evidence of substance abuse.",
+      "footer": "State-induced fear, documented by her attorney."
     }
   },
 
@@ -422,12 +422,11 @@
     "id": "removal-cost",
     "nodeId": "foster_care_removal",
     "sources": [
-      { "label": "NYC ACS Budget Data 2024" },
-      { "label": "Vera Institute, The Costs of Foster Care" }
+      { "label": "NYC Comptroller / Housing Subsidy Data (2024)" }
     ],
     "chart": {
       "type": "cost-compare",
-      "label": "Annual Cost Comparison",
+      "label": "The Cost of \"Help\"",
       "items": [
         {
           "description": "To separate a child from their family",
@@ -457,8 +456,14 @@
       "type": "big-number",
       "label": "For \"Marginal Cases\" — Where Evidence Is Ambiguous",
       "value": "3×",
+      "unit": "higher arrest rate",
       "accentColor": "red",
       "description": "Foster care placement can result in an adult arrest rate up to 3× higher than if the child had stayed home.",
+      "tags": [
+        "Lower employment",
+        "Higher teen birth rate",
+        "Increased homelessness"
+      ],
       "footer": "Researchers controlling for pre-existing conditions still find that placement itself causes harm — not just the circumstances that led to it."
     }
   },

@@ -1,0 +1,67 @@
+{
+  "id": "sarah",
+  "title": "Sarah's Story",
+  "character": {
+    "name": "Sarah",
+    "summary": "Sarah is a grandmother living in Queens who helps care for her 5-year-old grandson. A minor dispute with a neighbor led to a malicious, anonymous report."
+  },
+  "intro": {
+    "title": "A Call Out of Spite",
+    "description": "In New York City, many reports of child abuse or neglect are not based on actual safety concerns, but stem from adult disputes. The anonymous reporting system is frequently weaponized."
+  },
+  "path": [
+    "start",
+    "scr_screening",
+    "screened_out"
+  ],
+  "nodeContent": {
+    "start": {
+      "blocks": [
+        {
+          "type": "text",
+          "title": "An Unexpected Threat",
+          "body": "On a Tuesday afternoon, Sarah had a verbal argument with her neighbor over some clutter left in the hallway. A few hours later, the Statewide Central Register (SCR) hotline received a tip concerning her grandson."
+        },
+        {
+          "type": "callout",
+          "text": "Anonymous callers face almost no legal consequences for making false or malicious reports."
+        }
+      ]
+    },
+    "scr_screening": {
+      "blocks": [
+        {
+          "type": "text",
+          "title": "The Initial Screen",
+          "body": "An ACS worker listened to the caller's allegations. The neighbor claimed to hear a child crying incessantly and implied the boy wasn't being fed."
+        },
+        {
+          "type": "quote",
+          "text": "I just put him down for a nap and he threw a tantrum. How does that suddenly become child abuse?",
+          "attribution": "Sarah"
+        }
+      ]
+    },
+    "screened_out": {
+      "blocks": [
+        {
+          "type": "text",
+          "title": "Case Dropped",
+          "body": "Fortunately, the screening personnel determined that the allegations in the call were too vague and did not meet the statutory criteria for abuse or neglect. The case was closed immediately without an investigator ever knocking on Sarah's door."
+        },
+        {
+          "type": "text",
+          "body": "While she was spared the trauma of an investigation, Sarah remains fearful. She realized that it only takes one phone call from an angry neighbor to invite the government into her family's life."
+        }
+      ]
+    }
+  },
+  "ending": {
+    "title": "An Invisible Fear",
+    "description": "Sarah's case was screened out, but the experience left her deeply anxious. She is now hyper-vigilant, terrified that even normal childhood behavior might trigger another report.",
+    "actions": [
+      "Advocate for ending anonymous reporting to increase accountability.",
+      "Support community education on families' legal rights."
+    ]
+  }
+}
