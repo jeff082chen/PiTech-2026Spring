@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useRef } from 'react';
+import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import {
   ArrowRight,
   ArrowLeft,
@@ -7,9 +7,10 @@ import {
   Clock,
   ChevronDown,
   X,
+  Minimize2,
 } from 'lucide-react';
 import STORY_NODES, { EDGES } from '../data/storyNodes';
-import { CANVAS_W, CANVAS_H, MOBILE_BREAKPOINT } from '../config/constants';
+import { CANVAS_W, MAP_CANVAS_H, MOBILE_BREAKPOINT } from '../config/constants';
 import { BORDER_COLOR } from '../config/categoryStyles';
 
 interface Props {
@@ -17,12 +18,24 @@ interface Props {
 }
 
 export default function MapView({ onBackToLanding }: Props) {
-  const [activeNodeId, setActiveNodeId] = useState<string | null>(null);
-  const [showOverlay, setShowOverlay] = useState(false);
-  const [history, setHistory] = useState<string[]>([]);
+  const [activeNodeId,        setActiveNodeId]        = useState<string | null>(null);
+  const [showOverlay,         setShowOverlay]         = useState(false);
+  const [history,             setHistory]             = useState<string[]>([]);
   const [showHistoryDropdown, setShowHistoryDropdown] = useState(false);
-  const [viewport, setViewport] = useState({ w: window.innerWidth, h: window.innerHeight });
-  const overlayTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [viewport,            setViewport]            = useState({ w: window.innerWidth, h: window.innerHeight });
+  const [expandedNodeIds,     setExpandedNodeIds]     = useState<Set<string>>(new Set());
+  const [userScale,           setUserScale]           = useState(0);        // 0 = auto-fit
+  const [panOffset,           setPanOffset]           = useState({ x: 0, y: 0 });
+  const [isDragging,          setIsDragging]          = useState(false);
+  const [isInteracting,       setIsInteracting]       = useState(false);
+
+  const overlayTimerRef  = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const interactTimer    = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const dragOrigin       = useRef({ mx: 0, my: 0, px: 0, py: 0 });
+  const touchOrigin      = useRef<{ tx: number; ty: number; px: number; py: number } | null>(null);
+  const containerRef     = useRef<HTMLDivElement>(null);
+
+  // ── Viewport resize ─────────────────────────────────────────────────────────
 
   useEffect(() => {
     const handleResize = () => setViewport({ w: window.innerWidth, h: window.innerHeight });
@@ -30,39 +43,72 @@ export default function MapView({ onBackToLanding }: Props) {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // On mount: brief overview pause, then zoom, then overlay card
+  // ── On mount: cleanup only ───────────────────────────────────────────────────
+
   useEffect(() => {
-    const t1 = setTimeout(() => setActiveNodeId('start'), 300);
-    const t2 = setTimeout(() => setShowOverlay(true), 900);
     return () => {
-      clearTimeout(t1);
-      clearTimeout(t2);
       if (overlayTimerRef.current) clearTimeout(overlayTimerRef.current);
     };
   }, []);
 
-  const incomingNodes = useMemo(() => {
-    if (!activeNodeId) return [];
-    return EDGES
-      .filter(edge => edge.to === activeNodeId)
-      .map(edge => STORY_NODES[edge.from]);
-  }, [activeNodeId]);
+  // ── Derived: which primary nodes have expandable children ───────────────────
+
+  const expandableNodeIds = useMemo(() => {
+    return new Set(
+      Object.values(STORY_NODES)
+        .filter(n => n.nodeType === 'hidden' && n.parentPrimaryId)
+        .map(n => n.parentPrimaryId!)
+    );
+  }, []);
+
+  // ── Derived: which nodes & edges are currently visible ──────────────────────
+
+  const visibleNodes = useMemo(() => {
+    return Object.values(STORY_NODES).filter(n =>
+      n.nodeType !== 'hidden' ||
+      (n.parentPrimaryId != null && expandedNodeIds.has(n.parentPrimaryId))
+    );
+  }, [expandedNodeIds]);
+
+  const visibleEdges = useMemo(() => {
+    const visibleIds = new Set(visibleNodes.map(n => n.id));
+    return EDGES.filter(e => visibleIds.has(e.from) && visibleIds.has(e.to));
+  }, [visibleNodes]);
+
+  // ── Auto-fit helpers (reused in event handlers) ──────────────────────────────
+
+  const getAutoFit = useCallback(() => {
+    const scale = Math.min(viewport.w / CANVAS_W, viewport.h / MAP_CANVAS_H) * 0.9;
+    const tx    = (viewport.w  - CANVAS_W      * scale) / 2;
+    const ty    = (viewport.h  - MAP_CANVAS_H  * scale) / 2;
+    return { scale, tx, ty };
+  }, [viewport]);
+
+  const getEffectiveTransform = useCallback(() => {
+    if (userScale > 0) return { scale: userScale, tx: panOffset.x, ty: panOffset.y };
+    return getAutoFit();
+  }, [userScale, panOffset, getAutoFit]);
+
+  // ── Camera transform ─────────────────────────────────────────────────────────
 
   const cameraTransform = useMemo(() => {
-    const isMobile = viewport.w < MOBILE_BREAKPOINT;
-    if (!activeNodeId) {
-      const scale = Math.min(viewport.w / CANVAS_W, viewport.h / CANVAS_H) * 0.9;
-      const tx = (viewport.w - CANVAS_W * scale) / 2;
-      const ty = (viewport.h - CANVAS_H * scale) / 2;
-      return { transform: `translate(${tx}px, ${ty}px) scale(${scale})` };
-    } else {
-      const node = STORY_NODES[activeNodeId];
-      const scale = isMobile ? 0.7 : 1;
-      const tx = viewport.w * 0.5 - node.x * scale;
-      const ty = viewport.h * 0.5 - node.y * scale;
-      return { transform: `translate(${tx}px, ${ty}px) scale(${scale})` };
+    if (activeNodeId) {
+      const isMobile = viewport.w < MOBILE_BREAKPOINT;
+      const node     = STORY_NODES[activeNodeId];
+      const scale    = isMobile ? 0.7 : 1;
+      const tx       = viewport.w * 0.5 - node.x * scale;
+      const ty       = viewport.h * 0.5 - node.y * scale;
+      return `translate(${tx}px, ${ty}px) scale(${scale})`;
     }
-  }, [activeNodeId, viewport]);
+    const { scale, tx, ty } = getEffectiveTransform();
+    return `translate(${tx}px, ${ty}px) scale(${scale})`;
+  }, [activeNodeId, viewport, getEffectiveTransform]);
+
+  const canvasTransition = (activeNodeId || (!isInteracting && !isDragging))
+    ? 'transform 1000ms cubic-bezier(0.25,1,0.5,1)'
+    : 'none';
+
+  // ── Overlay helpers ──────────────────────────────────────────────────────────
 
   const scheduleOverlay = () => {
     if (overlayTimerRef.current) clearTimeout(overlayTimerRef.current);
@@ -70,12 +116,46 @@ export default function MapView({ onBackToLanding }: Props) {
     overlayTimerRef.current = setTimeout(() => setShowOverlay(true), 600);
   };
 
+  // ── Node navigation (zoom + overlay) ────────────────────────────────────────
+
   const handleNodeSelect = (nodeId: string) => {
     if (activeNodeId) setHistory(prev => [...prev, activeNodeId]);
     setActiveNodeId(nodeId);
     setShowHistoryDropdown(false);
+    // Auto-expand parent when navigating to a hidden node
+    const node = STORY_NODES[nodeId];
+    if (node?.nodeType === 'hidden' && node.parentPrimaryId) {
+      setExpandedNodeIds(prev => new Set([...prev, node.parentPrimaryId!]));
+    }
     scheduleOverlay();
   };
+
+  // ── Node click (overview) — expand first, then zoom+overlay ─────────────────
+
+  const handleNodeClick = (nodeId: string) => {
+    const isExpandable    = expandableNodeIds.has(nodeId);
+    const isAlreadyExpanded = expandedNodeIds.has(nodeId);
+
+    if (isExpandable && !isAlreadyExpanded) {
+      setExpandedNodeIds(prev => new Set([...prev, nodeId]));
+      return;
+    }
+    handleNodeSelect(nodeId);
+  };
+
+  // ── Expand/collapse badge toggle ─────────────────────────────────────────────
+
+  const toggleExpand = (e: React.MouseEvent, nodeId: string) => {
+    e.stopPropagation();
+    setExpandedNodeIds(prev => {
+      const next = new Set(prev);
+      if (next.has(nodeId)) next.delete(nodeId);
+      else next.add(nodeId);
+      return next;
+    });
+  };
+
+  // ── History navigation ───────────────────────────────────────────────────────
 
   const jumpToHistory = (index: number) => {
     const targetNodeId = history[index];
@@ -91,30 +171,143 @@ export default function MapView({ onBackToLanding }: Props) {
     setShowHistoryDropdown(false);
   };
 
+  const resetView = () => {
+    setUserScale(0);
+    setPanOffset({ x: 0, y: 0 });
+  };
+
+  // ── Mouse wheel zoom ─────────────────────────────────────────────────────────
+
+  const onWheel = useCallback((e: WheelEvent) => {
+    if (activeNodeId) return;
+    e.preventDefault();
+
+    const { scale: curScale, tx: curTx, ty: curTy } = getEffectiveTransform();
+    const factor   = e.deltaY > 0 ? 0.92 : 1.08;
+    const newScale = Math.max(0.05, Math.min(4.0, curScale * factor));
+
+    const rect = containerRef.current?.getBoundingClientRect();
+    const mx   = rect ? e.clientX - rect.left : e.clientX;
+    const my   = rect ? e.clientY - rect.top  : e.clientY;
+
+    const newTx = mx - ((mx - curTx) / curScale) * newScale;
+    const newTy = my - ((my - curTy) / curScale) * newScale;
+
+    setUserScale(newScale);
+    setPanOffset({ x: newTx, y: newTy });
+    setIsInteracting(true);
+    if (interactTimer.current) clearTimeout(interactTimer.current);
+    interactTimer.current = setTimeout(() => setIsInteracting(false), 150);
+  }, [activeNodeId, getEffectiveTransform]);
+
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    el.addEventListener('wheel', onWheel, { passive: false });
+    return () => el.removeEventListener('wheel', onWheel);
+  }, [onWheel]);
+
+  // ── Mouse drag pan ───────────────────────────────────────────────────────────
+
+  const onMouseDown = (e: React.MouseEvent) => {
+    if (activeNodeId || e.button !== 0) return;
+    const { tx, ty, scale } = getEffectiveTransform();
+    dragOrigin.current = { mx: e.clientX, my: e.clientY, px: tx, py: ty };
+    if (userScale === 0) {
+      setUserScale(scale);
+      setPanOffset({ x: tx, y: ty });
+    }
+    setIsDragging(true);
+  };
+
+  const onMouseMove = (e: React.MouseEvent) => {
+    if (!isDragging) return;
+    const dx = e.clientX - dragOrigin.current.mx;
+    const dy = e.clientY - dragOrigin.current.my;
+    setPanOffset({ x: dragOrigin.current.px + dx, y: dragOrigin.current.py + dy });
+  };
+
+  const onMouseUp = () => setIsDragging(false);
+
+  // ── Touch drag pan ───────────────────────────────────────────────────────────
+
+  const onTouchStart = (e: React.TouchEvent) => {
+    if (activeNodeId || e.touches.length !== 1) return;
+    const { tx, ty, scale } = getEffectiveTransform();
+    touchOrigin.current = { tx: e.touches[0].clientX, ty: e.touches[0].clientY, px: tx, py: ty };
+    if (userScale === 0) {
+      setUserScale(scale);
+      setPanOffset({ x: tx, y: ty });
+    }
+  };
+
+  const onTouchMove = (e: React.TouchEvent) => {
+    if (!touchOrigin.current || e.touches.length !== 1) return;
+    const dx = e.touches[0].clientX - touchOrigin.current.tx;
+    const dy = e.touches[0].clientY - touchOrigin.current.ty;
+    setPanOffset({ x: touchOrigin.current.px + dx, y: touchOrigin.current.py + dy });
+  };
+
+  const onTouchEnd = () => { touchOrigin.current = null; };
+
+  // ── Derived: incoming visible nodes for the overlay ─────────────────────────
+
+  const visibleNodeIds = useMemo(() => new Set(visibleNodes.map(n => n.id)), [visibleNodes]);
+
+  const incomingNodes = useMemo(() => {
+    if (!activeNodeId) return [];
+    return EDGES
+      .filter(edge => edge.to === activeNodeId && visibleNodeIds.has(edge.from))
+      .map(edge => STORY_NODES[edge.from]);
+  }, [activeNodeId, visibleNodeIds]);
+
   const activeNode = activeNodeId ? STORY_NODES[activeNodeId] : null;
 
-  return (
-    <div className="relative w-screen h-screen bg-neutral-100 overflow-hidden font-sans">
+  // ── Render ───────────────────────────────────────────────────────────────────
 
-      {/* ── MAP CANVAS (pans & zooms in background) ── */}
+  return (
+    <div
+      ref={containerRef}
+      className={`relative w-screen h-screen bg-neutral-100 overflow-hidden font-sans select-none ${
+        isDragging ? 'cursor-grabbing' : (!activeNodeId ? 'cursor-grab' : '')
+      }`}
+      onMouseDown={onMouseDown}
+      onMouseMove={onMouseMove}
+      onMouseUp={onMouseUp}
+      onMouseLeave={onMouseUp}
+      onTouchStart={onTouchStart}
+      onTouchMove={onTouchMove}
+      onTouchEnd={onTouchEnd}
+    >
+
+      {/* ── MAP CANVAS ── */}
       <div
-        className="absolute top-0 left-0 origin-top-left transition-transform duration-1000 ease-[cubic-bezier(0.25,1,0.5,1)]"
-        style={{ width: CANVAS_W, height: CANVAS_H, ...cameraTransform }}
+        className="absolute top-0 left-0 origin-top-left"
+        style={{
+          width: CANVAS_W,
+          height: MAP_CANVAS_H,
+          transform: cameraTransform,
+          transition: canvasTransition,
+        }}
       >
         {/* SVG Edge Layer */}
-        <svg className="absolute inset-0 w-full h-full pointer-events-none">
-          {EDGES.map((edge, idx) => {
+        <svg className="absolute inset-0 pointer-events-none" style={{ width: CANVAS_W, height: MAP_CANVAS_H }}>
+          {visibleEdges.map((edge, idx) => {
             const n1 = STORY_NODES[edge.from];
             const n2 = STORY_NODES[edge.to];
+            if (!n1 || !n2) return null;
             const isActive = activeNodeId === edge.from || activeNodeId === edge.to;
-            const path = `M ${n1.x} ${n1.y} C ${n1.x + 150} ${n1.y}, ${n2.x - 150} ${n2.y}, ${n2.x} ${n2.y}`;
+            const isHiddenEdge = n1.nodeType === 'hidden' || n2.nodeType === 'hidden';
+            const midX = (n1.x + n2.x) / 2;
+            const path = `M ${n1.x} ${n1.y} C ${midX} ${n1.y}, ${midX} ${n2.y}, ${n2.x} ${n2.y}`;
             return (
               <path
                 key={idx}
                 d={path}
                 fill="none"
-                stroke={isActive ? '#ef4444' : '#cbd5e1'}
-                strokeWidth={isActive ? 6 : 4}
+                stroke={isActive ? '#ef4444' : (isHiddenEdge ? '#94a3b8' : '#cbd5e1')}
+                strokeWidth={isActive ? 6 : (isHiddenEdge ? 3 : 4)}
+                strokeDasharray={isHiddenEdge && !isActive ? '8 4' : undefined}
                 className="transition-colors duration-500"
               />
             );
@@ -122,31 +315,55 @@ export default function MapView({ onBackToLanding }: Props) {
         </svg>
 
         {/* Node Cards */}
-        {Object.values(STORY_NODES).map(node => {
-          const isSelected = activeNodeId === node.id;
-          const isDimmed  = showOverlay && !isSelected;
-          const borderColor = BORDER_COLOR[node.category];
+        {visibleNodes.map(node => {
+          const isSelected    = activeNodeId === node.id;
+          const isDimmed      = showOverlay && !isSelected;
+          const borderColor   = BORDER_COLOR[node.category];
+          const isExpandable  = expandableNodeIds.has(node.id);
+          const isExpanded    = expandedNodeIds.has(node.id);
+          const isHidden      = node.nodeType === 'hidden';
 
           return (
             <div
               key={node.id}
-              onClick={() => { if (!activeNodeId) handleNodeSelect(node.id); }}
+              onClick={() => { if (!activeNodeId) handleNodeClick(node.id); }}
               className={`
                 absolute transform -translate-x-1/2 -translate-y-1/2
                 flex flex-col items-center justify-center p-6
-                bg-white rounded-2xl border-4 shadow-lg
+                rounded-2xl border-4 shadow-lg
                 transition-all duration-500
                 ${borderColor}
+                ${isHidden ? 'bg-neutral-50' : 'bg-white'}
                 ${!activeNodeId ? 'cursor-pointer hover:scale-105 hover:shadow-2xl' : 'pointer-events-none'}
-                ${isSelected ? 'ring-8 ring-red-500/30 scale-110 z-10 shadow-red-500/20' : 'z-0'}
-                ${isDimmed  ? 'opacity-30 grayscale' : 'opacity-100'}
+                ${isSelected  ? 'ring-8 ring-red-500/30 scale-110 z-10 shadow-red-500/20' : 'z-0'}
+                ${isDimmed    ? 'opacity-30 grayscale' : 'opacity-100'}
               `}
-              style={{ left: node.x, top: node.y, width: '320px' }}
+              style={{ left: node.x, top: node.y, width: isHidden ? '280px' : '320px' }}
             >
+              {/* Expand/collapse badge */}
+              {isExpandable && (
+                <button
+                  onClick={e => toggleExpand(e, node.id)}
+                  className={`
+                    absolute -top-3 -right-3 w-7 h-7 rounded-full border-2 border-white
+                    text-white text-sm font-bold flex items-center justify-center shadow-md z-20
+                    transition-colors pointer-events-auto
+                    ${isExpanded ? 'bg-red-500 hover:bg-red-600' : 'bg-neutral-700 hover:bg-neutral-900'}
+                  `}
+                  title={isExpanded ? 'Collapse sub-nodes' : 'Expand hidden nodes'}
+                >
+                  {isExpanded ? '−' : '+'}
+                </button>
+              )}
+
               <div className="mb-4">{node.icon}</div>
-              <h3 className="text-xl font-bold text-neutral-900 text-center">{node.title}</h3>
+              <h3 className={`font-bold text-neutral-900 text-center ${isHidden ? 'text-base' : 'text-xl'}`}>
+                {node.title}
+              </h3>
               {!activeNodeId && (
-                <p className="text-sm text-neutral-500 text-center mt-2 font-medium">Click to inspect</p>
+                <p className="text-xs text-neutral-400 text-center mt-2 font-medium">
+                  {isExpandable && !isExpanded ? 'Click to expand' : 'Click to inspect'}
+                </p>
               )}
             </div>
           );
@@ -160,7 +377,7 @@ export default function MapView({ onBackToLanding }: Props) {
         </h1>
 
         <div className="flex flex-col items-end pointer-events-auto">
-          <div className="flex space-x-3">
+          <div className="flex space-x-3 flex-wrap justify-end gap-y-2">
 
             {/* History Dropdown */}
             {activeNodeId && (
@@ -204,7 +421,7 @@ export default function MapView({ onBackToLanding }: Props) {
               </div>
             )}
 
-            {/* Full Map button */}
+            {/* Full Map button (when zoomed to a node) */}
             {activeNodeId && (
               <button
                 onClick={closeToMap}
@@ -212,6 +429,28 @@ export default function MapView({ onBackToLanding }: Props) {
               >
                 <ZoomOut className="w-4 h-4" />
                 <span className="hidden md:inline">Full Map</span>
+              </button>
+            )}
+
+            {/* Reset zoom button (when user has zoomed/panned in overview) */}
+            {!activeNodeId && userScale > 0 && (
+              <button
+                onClick={resetView}
+                className="flex items-center space-x-2 bg-white text-neutral-900 px-4 py-2 rounded-full text-sm font-bold shadow-md hover:bg-neutral-100 transition-colors border border-neutral-200"
+              >
+                <Minimize2 className="w-4 h-4" />
+                <span className="hidden md:inline">Reset View</span>
+              </button>
+            )}
+
+            {/* Collapse all expanded nodes */}
+            {!activeNodeId && expandedNodeIds.size > 0 && (
+              <button
+                onClick={() => setExpandedNodeIds(new Set())}
+                className="flex items-center space-x-2 bg-white text-neutral-700 px-4 py-2 rounded-full text-sm font-bold shadow-md hover:bg-neutral-100 transition-colors border border-neutral-200"
+              >
+                <span className="text-sm">−</span>
+                <span className="hidden md:inline">Collapse All</span>
               </button>
             )}
 
@@ -227,7 +466,7 @@ export default function MapView({ onBackToLanding }: Props) {
         </div>
       </div>
 
-      {/* ── DETAIL OVERLAY (Three-panel: Left Wing / Center Card / Right Wing) ── */}
+      {/* ── DETAIL OVERLAY ── */}
       <div
         className={`
           fixed inset-0 z-40 flex items-center justify-center p-4 md:p-8
@@ -283,6 +522,11 @@ export default function MapView({ onBackToLanding }: Props) {
                 <div className="bg-neutral-50 p-3 rounded-2xl border border-neutral-100">
                   {activeNode.icon}
                 </div>
+                {activeNode.nodeType === 'hidden' && (
+                  <span className="ml-3 self-center text-xs font-bold uppercase tracking-widest text-neutral-400 bg-neutral-100 px-3 py-1 rounded-full">
+                    Expanded Detail
+                  </span>
+                )}
               </div>
 
               <h2 className="text-3xl md:text-4xl font-extrabold text-neutral-900 mb-4">

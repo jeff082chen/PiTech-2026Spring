@@ -78,21 +78,30 @@ src/
 ├── types.ts                       All shared TypeScript interfaces
 │
 ├── config/
-│   ├── constants.ts               Shared numeric constants (canvas size, breakpoints)
+│   ├── constants.ts               Canvas dimensions (CANVAS_W/H, MAP_CANVAS_H), breakpoints
 │   ├── categoryStyles.ts          Tailwind class maps keyed by NodeCategory
 │   └── iconRegistry.ts            String → lucide-react component lookup table
 │
 ├── data/
 │   ├── storyNodes.tsx             Adapter: nodes.json + statistics.json → StoryNode[]
 │   ├── config/
-│   │   ├── nodes.json             ← EDIT HERE: flowchart nodes, positions, icons, choices
+│   │   ├── nodes.json             ← EDIT HERE: 37 nodes (15 primary + 22 hidden) + 37 edges
 │   │   └── statistics.json        ← EDIT HERE: all 21 stat charts (declarative schema)
 │   └── stories/
 │       └── maria.json             ← EDIT HERE: Maria's story text, path, intro, ending
 │
 └── components/
     ├── StoryPage.tsx              Scroll-driven narrative experience (primary view)
-    ├── MapView.tsx                Free-explore click-to-navigate map (secondary view)
+    ├── MapView.tsx                Free-explore map: zoom/pan + expand hidden nodes
+    ├── builder/                   Visual story editor (StoryBuilder UI)
+    │   ├── StoryBuilder.tsx
+    │   ├── BlockEditor.tsx
+    │   ├── MetadataEditor.tsx
+    │   ├── NodeEditor.tsx
+    │   ├── PathBuilder.tsx
+    │   ├── PreviewPane.tsx
+    │   ├── StatsLibrary.tsx
+    │   └── MapEditorModal.tsx
     └── charts/
         ├── StatRenderer.tsx       Dispatch: chart.type → correct renderer component
         ├── accentMap.ts           AccentColor token → Tailwind class lookup tables
@@ -153,11 +162,11 @@ src/data/config/nodes.json       ← Layer 1: system graph (nodes, edges, positi
 src/data/stories/maria.json      ← Layer 3: character-specific narrative
 ```
 
-**Layer 1 — System graph** defines the institutional flowchart: all 15 nodes, their canvas positions, category, icon, system description, forward choices, and which statistics to attach. This layer is shared by both views and by every story.
+**Layer 1 — System graph** defines the institutional flowchart: **37 nodes** (15 primary + 22 hidden) and **37 directed edges**. Primary nodes are shared by both views and all stories. Hidden nodes have `nodeType: "hidden"` and a `parentPrimaryId`; they are invisible in StoryPage and collapsed by default in MapView — users expand them by clicking the `+` badge on a primary node.
 
 **Layer 2 — Statistics** is a declarative JSON registry of all 21 stat entries. Each entry has a `chart` object with a `type` field; `StatRenderer` reads the type and dispatches to the correct renderer component. The renderer turns JSON data into a React visual — no JSX in the data file.
 
-**Layer 3 — Story config** (`StoryConfig`) defines one character's journey: which nodes they pass through (`path[]`), the personal story text for each node (`nodeContent`), and the intro/ending screens. A new character = a new JSON file, zero component changes.
+**Layer 3 — Story config** (`StoryConfig`) defines one character's journey: which nodes they pass through (`path[]`), the personal story text for each node (`nodeContent`), and the intro/ending screens. A new character = a new JSON file, zero component changes. Story paths use only primary nodes.
 
 ### Runtime data flow
 
@@ -288,7 +297,10 @@ To reorder statistics within a node: reorder the `statisticIds` array in `nodes.
 
 ### Editing Nodes — `src/data/config/nodes.json`
 
-This file controls the flowchart structure.
+This file controls the flowchart structure. There are two node types:
+
+- **Primary nodes** — appear in both StoryPage and MapView; use in story `path[]`.
+- **Hidden nodes** — MapView only; collapsed by default, expanded when user clicks the `+` badge on their parent primary node. Do not use in story `path[]`.
 
 #### Node fields
 
@@ -297,17 +309,21 @@ This file controls the flowchart structure.
   "nodes": {
     "node_id": {
       "id": "node_id",
-      "x": 350,                        // canvas x position (0–6700)
-      "y": 2000,                       // canvas y position (0–4500)
-      "category": "hotline",           // controls border colour (see Node ID Reference)
-      "icon": "ShieldAlert",           // must be in iconRegistry.ts (see Icon Registry)
-      "iconColor": "text-yellow-500",  // any Tailwind text-color class
+      "x": 350,                         // canvas x position (0–6700)
+      "y": 2000,                        // canvas y — primary: 600–3550; hidden: up to 5000
+      "category": "hotline",            // controls border colour (see Node ID Reference)
+      "icon": "ShieldAlert",            // must be in iconRegistry.ts (see Icon Registry)
+      "iconColor": "text-yellow-500",   // any Tailwind text-color class
       "title": "Call to SCR Hotline",
       "description": "System-level explanation shown in both views.",
       "choices": [
         { "text": "Button label text", "nextNodeId": "next_node_id" }
       ],
-      "statisticIds": ["stat-id-1", "stat-id-2"]
+      "statisticIds": ["stat-id-1", "stat-id-2"],
+
+      // ── Hidden node fields (omit for primary nodes) ──────────────────────
+      "nodeType": "hidden",             // "primary" (default) | "hidden"
+      "parentPrimaryId": "cares_track"  // required when nodeType is "hidden"
     }
   },
   "edges": [
@@ -319,7 +335,9 @@ This file controls the flowchart structure.
 **Rules:**
 - Every `nextNodeId` in `choices` must have a matching `{ "from": ..., "to": ... }` in `edges`
 - `statisticIds` order controls the scroll order of stat phases in StoryPage
-- `x`/`y` are canvas coordinates — X spacing is ~650 px per column
+- Primary nodes: X spacing ~650 px per column; Y within 600–3550
+- Hidden nodes: position near their parent; Y can reach 5000 (MapView uses a `5500 px` tall canvas)
+- `nodeType` and `parentPrimaryId` can be omitted on primary nodes — they default to primary behaviour
 
 ---
 
@@ -918,12 +936,23 @@ Renders a fully custom React component. Use this when the visual is too bespoke 
 
 **Edit** — open `src/data/config/nodes.json`, find the node by key, change any field. Changing `x`/`y` repositions it on the canvas.
 
-**Add a new node:**
+**Add a new primary node:**
 
-1. Add the node entry to `"nodes"` in `nodes.json`.
-2. Add edges to `"edges"` connecting it to adjacent nodes.
-3. Add `choices` entries in existing nodes that should link to it.
-4. If needed, add statistics in `statistics.json` and reference them in `statisticIds`.
+1. Add the node entry to `"nodes"` in `nodes.json` (omit `nodeType` — it defaults to primary).
+2. Set `x`/`y` within the primary canvas zones (see layout reference below).
+3. Add edges to `"edges"` connecting it to adjacent nodes.
+4. Add `choices` entries in existing nodes that should link to it.
+5. If needed, add statistics in `statistics.json` and reference them in `statisticIds`.
+
+**Add hidden sub-nodes to an existing primary node:**
+
+Hidden nodes expand the detail visible in MapView when the user clicks the `+` badge on a primary node. They are invisible in StoryPage.
+
+1. Add entries to `"nodes"` with `"nodeType": "hidden"` and `"parentPrimaryId": "<target-primary-id>"`.
+2. Position them in the hidden node zones (see layout reference below); do not overlap primary nodes.
+3. Add edges in `"edges"` connecting hidden nodes to each other. Include at least one edge from the primary node to a hidden node so MapView knows where to start.
+4. Do **not** add hidden nodes to any story `path[]` — they are MapView-only.
+5. StoryPage automatically filters them out; no StoryPage changes needed.
 
 **Remove a node:**
 
@@ -932,15 +961,28 @@ Renders a fully custom React component. Use this when the visual is too bespoke 
 3. Remove any `choices` referencing the deleted ID in other nodes.
 4. Remove it from `"path"` in any story JSON files.
 
-**Canvas layout reference** (`6700 × 4500` px):
+**Canvas layout reference:**
+
+Primary nodes (StoryPage uses `6700 × 4500`; MapView uses `6700 × 5500`):
 
 ```
-y ≈ 600–900   Better-outcome branches (screened out, CARES, unsubstantiated)
-y ≈ 1100      Supervision order endpoint
-y ≈ 2000      Main horizontal spine (hotline → court)
-y ≈ 2950–3550 Removal branches (foster care, kinship, group home)
+y ≈ 600–900    Better-outcome exits (screened_out, cares_track, unsubstantiated)
+y ≈ 1100       Supervision endpoint
+y ≈ 2000       Main horizontal spine (hotline → court)
+y ≈ 2950–3550  Removal branches (foster care, kinship, group home)
 X spacing: ~650 px per depth column
 ```
+
+Hidden node zones (MapView only):
+
+```
+y ≈ 1350       CARES sub-tree  (parent: cares_track)
+y ≈ 1500–2300  Supervision sub-tree  (parent: supervision_order)
+y ≈ 2450       Fork node  (parent: scr_screening)
+y ≈ 3400–5000  Foster care placement tree  (parent: foster_care_removal)
+```
+
+Set `"nodeType": "hidden"` and `"parentPrimaryId": "<primary-id>"` on any node that should only appear in MapView when expanded. Do not add hidden nodes to story `path[]` arrays.
 
 ---
 
@@ -1024,22 +1066,25 @@ const SCROLL_CONFIG = {
 
 All valid values for the `"icon"` field in `nodes.json`:
 
-| `"icon"` value | Visual | Used on node |
+| `"icon"` value | Visual | Notable uses |
 |----------------|--------|-------------|
 | `"ShieldAlert"` | Shield with exclamation | `start` |
 | `"Search"` | Magnifying glass | `scr_screening` |
 | `"XCircle"` | Circle with X | `screened_out` |
 | `"Shield"` | Plain shield | `safety_assessment` |
-| `"Handshake"` | Handshake | `cares_track` |
+| `"Handshake"` | Handshake | `cares_track`, `community_services`, `mandated_preventive` |
 | `"EyeOff"` | Eye with slash | `investigation` |
 | `"Scale"` | Justice scales | `determination`, `court_hearing` |
-| `"CheckCircle2"` | Circle with checkmark | `unsubstantiated` |
-| `"ClipboardList"` | Clipboard with lines | `case_plan` |
-| `"FileCheck"` | File with checkmark | `court_filing` |
-| `"Home"` | House | `supervision_order` |
-| `"AlertTriangle"` | Triangle with exclamation | `foster_care_removal` |
-| `"Heart"` | Heart | `kinship_placement` |
-| `"Building2"` | Building | `group_home` |
+| `"CheckCircle2"` | Circle with checkmark | `unsubstantiated`, `cares_success`, `supervision_success` |
+| `"ClipboardList"` | Clipboard with lines | `case_plan`, `family_led_assessment` |
+| `"FileCheck"` | File with checkmark | `court_filing`, `service_plan_cares`, `court_service_plan` |
+| `"Home"` | House | `supervision_order`, `family_setting_decision`, `traditional_foster_care_node` |
+| `"AlertTriangle"` | Triangle with exclamation | `foster_care_removal`, `traditional_investigation_loop`, `supervision_failure` |
+| `"Heart"` | Heart | `kinship_placement`, `placement_decision`, `kinship_foster_care` |
+| `"Building2"` | Building | `group_home`, `residential_placement` |
+| `"Users"` | Two people | `fork`, `cares_entry`, `cares_main`, `supervision_intake` |
+| `"Stethoscope"` | Stethoscope | `medical_needs_decision`, `specialized_foster_care` |
+| `"Brain"` | Brain | `trauma_decision`, `effc` |
 
 To add more icons, see [Add a New Icon](#add-a-new-icon).
 
@@ -1065,25 +1110,35 @@ All valid values for any `accentColor` field:
 
 ### Node ID Reference
 
-All valid node IDs for use in `"path"`, `"nextNodeId"`, and `"statisticIds"`:
+**Primary nodes** — valid in `"path"`, `"nextNodeId"`, and `"statisticIds"`:
 
 | Node ID | Title | Category |
 |---------|-------|----------|
 | `start` | Call to SCR Hotline | `hotline` |
 | `scr_screening` | SCR Screening | `hotline` |
 | `screened_out` | Call Screened Out | `neutral` |
-| `safety_assessment` | Safety Assessment | `investigation` |
-| `cares_track` | CARES Track | `cares` |
+| `safety_assessment` | Safety Assessment | `neutral` |
+| `cares_track` | CARES — Supportive Track | `cares` |
 | `investigation` | ACS Investigation | `investigation` |
-| `determination` | Determination | `investigation` |
-| `unsubstantiated` | Case Unsubstantiated | `neutral` |
-| `case_plan` | Case Plan | `warning` |
-| `court_filing` | Article 10 Filing | `court` |
-| `court_hearing` | Court Hearing | `court` |
-| `supervision_order` | Supervision Order | `court` |
-| `foster_care_removal` | Foster Care Removal | `court` |
+| `determination` | Investigation Finding | `investigation` |
+| `unsubstantiated` | Case Closed — Unfounded | `neutral` |
+| `case_plan` | Voluntary Service Agreement | `investigation` |
+| `court_filing` | ACS Files a Court Petition | `court` |
+| `court_hearing` | Family Court Hearing | `court` |
+| `supervision_order` | Court Supervision Order | `court` |
+| `foster_care_removal` | Child Removed — Placed in ACS Custody | `court` |
 | `kinship_placement` | Kinship Placement | `court` |
-| `group_home` | Group Home / Congregate Care | `court` |
+| `group_home` | Foster Care or Group Home Placement | `court` |
+
+**Hidden nodes** — MapView only; do not use in story `path[]`:
+
+| Node ID | Parent primary | Sub-tree |
+|---------|---------------|----------|
+| `fork` | `scr_screening` | ACS intake step |
+| `cares_entry`, `cares_main`, `family_led_assessment`, `service_plan_cares`, `cares_success`, `traditional_investigation_loop` | `cares_track` | CARES detail flow |
+| `community_services` | `unsubstantiated` | Post-closure services |
+| `supervision_intake`, `court_service_plan`, `supervision_success`, `supervision_failure`, `mandated_preventive` | `supervision_order` | Supervision compliance flow |
+| `placement_decision`, `kinship_foster_care`, `medical_needs_decision`, `specialized_foster_care`, `trauma_decision`, `effc`, `family_setting_decision`, `traditional_foster_care_node`, `residential_placement` | `foster_care_removal` | Foster care placement tree |
 
 ---
 
@@ -1116,8 +1171,8 @@ type StoryContentBlock   // text | quote | callout | image
 ## Roadmap
 
 - **Headless CMS** — Move `nodes.json`, `statistics.json`, and story JSON to Sanity / Contentful so researchers can update copy through a web interface without touching files.
-- **Analytics** — PostHog / Mixpanel event tracking on node selection and path completion rate.
+- **Analytics** — PostHog / Mixpanel event tracking on node selection, path completion, and expand events.
 - **Shareable URLs** — Encode visited `path` as a query parameter for path replay and sharing.
 - **Accessibility** — `aria-label`, keyboard navigation (arrow keys on graph), focus management for stat panels.
-- **Mobile map pan** — Touch-drag pan for the overview map in `MapView`.
+- **Touch pinch-zoom** — Two-finger pinch zoom for the MapView overview on mobile.
 - **Additional stories** — New character JSON files (José, Eline) following the same `StoryConfig` schema.

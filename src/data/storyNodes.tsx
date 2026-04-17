@@ -36,14 +36,16 @@ const STORY_NODES: StoryNodes = Object.fromEntries(
     });
 
     const node: StoryNode = {
-      id:          cfg.id,
-      title:       cfg.title,
-      description: cfg.description,
-      x:           cfg.x,
-      y:           cfg.y,
-      category:    cfg.category,
-      choices:     cfg.choices,
+      id:             cfg.id,
+      title:          cfg.title,
+      description:    cfg.description,
+      x:              cfg.x,
+      y:              cfg.y,
+      category:       cfg.category,
+      choices:        cfg.choices,
       statistics,
+      nodeType:       cfg.nodeType,
+      parentPrimaryId: cfg.parentPrimaryId,
       icon: IconComp
         ? <IconComp className={iconClass} />
         : <span className={iconClass} title={cfg.icon} />,

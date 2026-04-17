@@ -4,6 +4,7 @@
 
 import {
   AlertTriangle,
+  Brain,
   Building2,
   CheckCircle2,
   ClipboardList,
@@ -16,12 +17,15 @@ import {
   Search,
   Shield,
   ShieldAlert,
+  Stethoscope,
+  Users,
   XCircle,
 } from 'lucide-react';
 import type { LucideProps } from 'lucide-react';
 
 export const ICON_REGISTRY: Record<string, React.ComponentType<LucideProps>> = {
   AlertTriangle,
+  Brain,
   Building2,
   CheckCircle2,
   ClipboardList,
@@ -34,5 +38,7 @@ export const ICON_REGISTRY: Record<string, React.ComponentType<LucideProps>> = {
   Search,
   Shield,
   ShieldAlert,
+  Stethoscope,
+  Users,
   XCircle,
 };

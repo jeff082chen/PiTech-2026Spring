@@ -339,7 +339,7 @@ export default function StoryPage({ storyConfig, onExploreMap }: Props) {
           style={{ width: CANVAS_W, height: CANVAS_H, transform: cameraTransform }}
         >
           <svg className="absolute inset-0 pointer-events-none" style={{ width: CANVAS_W, height: CANVAS_H }}>
-            {EDGES.map((edge, i) => {
+            {EDGES.filter(e => STORY_NODES[e.from]?.nodeType !== 'hidden' && STORY_NODES[e.to]?.nodeType !== 'hidden').map((edge, i) => {
               const n1 = STORY_NODES[edge.from];
               const n2 = STORY_NODES[edge.to];
               const onPath = pathSet.has(edge.from) && pathSet.has(edge.to);
@@ -354,7 +354,7 @@ export default function StoryPage({ storyConfig, onExploreMap }: Props) {
             })}
           </svg>
 
-          {Object.values(STORY_NODES).map(node => {
+          {Object.values(STORY_NODES).filter(n => n.nodeType !== 'hidden').map(node => {
             const isActive  = node.id === cameraNodeId;
             const isVisited = visitedSet.has(node.id);
             const onPath    = pathSet.has(node.id);

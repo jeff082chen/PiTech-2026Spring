@@ -34,6 +34,8 @@ export interface StoryNode {
   category: NodeCategory;
   statistics?: NodeStatistic[]; // zero to many visual stat components
   choices: Choice[];
+  nodeType?: 'primary' | 'hidden'; // hidden nodes only appear in MapView when expanded
+  parentPrimaryId?: string;        // required when nodeType === 'hidden'
 }
 
 export interface Edge {
@@ -58,6 +60,8 @@ export interface NodeConfigEntry {
   description: string;
   choices: Choice[];
   statisticIds?: string[];    // ordered refs into statistics.json
+  nodeType?: 'primary' | 'hidden'; // hidden nodes only appear in MapView when expanded
+  parentPrimaryId?: string;        // required when nodeType === 'hidden'
 }
 
 export interface NodesFile {

@@ -56,21 +56,30 @@ src/
 ├── types.ts                       All shared TypeScript interfaces
 │
 ├── config/
-│   ├── constants.ts               CANVAS_W/H, MOBILE_BREAKPOINT — shared by both views
+│   ├── constants.ts               CANVAS_W/H, MAP_CANVAS_H, MOBILE_BREAKPOINT
 │   ├── categoryStyles.ts          Tailwind class maps keyed by NodeCategory
 │   └── iconRegistry.ts            string → lucide-react component mapping
 │
 ├── data/
 │   ├── storyNodes.tsx             Runtime adapter: nodes.json + statistics.json → StoryNode[]
 │   ├── config/
-│   │   ├── nodes.json             15 nodes + 15 directed edges (pure JSON — edit here)
+│   │   ├── nodes.json             37 nodes (15 primary + 22 hidden) + 37 directed edges
 │   │   └── statistics.json        21 chart schemas (pure JSON — edit here)
 │   └── stories/
 │       └── maria.json             Maria's narrative (path, story text, character — pure JSON)
 │
 └── components/
-    ├── StoryPage.tsx              Scroll-driven narrative (primary view)  ~624 lines
-    ├── MapView.tsx                Free-explore click map (secondary view) ~337 lines
+    ├── StoryPage.tsx              Scroll-driven narrative (primary view)
+    ├── MapView.tsx                Free-explore map: zoom/pan + expand hidden nodes
+    ├── builder/                   Visual content editor (StoryBuilder UI)
+    │   ├── StoryBuilder.tsx       Top-level builder shell
+    │   ├── BlockEditor.tsx        Story block editing panel
+    │   ├── MetadataEditor.tsx     Character / intro / ending fields
+    │   ├── NodeEditor.tsx         Node-level editing
+    │   ├── PathBuilder.tsx        Drag-and-drop path sequence
+    │   ├── PreviewPane.tsx        Live story preview inside builder
+    │   ├── StatsLibrary.tsx       Statistics selector sidebar
+    │   └── MapEditorModal.tsx     Node position editing on canvas
     └── charts/
         ├── StatRenderer.tsx       Main dispatch: chart.type → renderer component
         ├── accentMap.ts           AccentColor token → Tailwind class maps
@@ -311,7 +320,10 @@ maria.json ───────────────────────
 
 ### Layer 1 — System graph (`src/data/config/nodes.json`)
 
-Defines the 15 nodes of the family policing flowchart and the 15 directed edges between them.
+Defines **37 nodes** and **37 directed edges** across two tiers:
+
+- **15 primary nodes** — the main flowchart spine, visible in both StoryPage and MapView overview.
+- **22 hidden nodes** — expanded detail sub-trees, visible only when the user expands a primary node in MapView. They have `nodeType: "hidden"` and a `parentPrimaryId` pointing to their parent primary node.
 
 **Exports (via adapter `storyNodes.tsx`):**
 - `STORY_NODES` (default) — `Record<string, StoryNode>`
@@ -326,42 +338,60 @@ Defines the 15 nodes of the family policing flowchart and the 15 directed edges 
 | `description` | `string` | Institutional explanation (system-level, not personal) |
 | `icon` | `string` | Key in `ICON_REGISTRY` (e.g. `"ShieldAlert"`) |
 | `iconColor` | `string?` | Tailwind text class (e.g. `"text-yellow-500"`); default `text-neutral-400` |
-| `x`, `y` | `number` | Node centre position on the 6700×4500 canvas |
+| `x`, `y` | `number` | Node centre position on the canvas |
 | `category` | `NodeCategory` | Controls border colour in both views |
 | `statisticIds` | `string[]?` | Ordered IDs from `statistics.json`; each becomes one scroll phase |
 | `choices` | `Choice[]` | Forward edges; empty array = terminal node |
+| `nodeType` | `'primary' \| 'hidden'?` | Omit or set `"primary"` for main nodes; `"hidden"` for sub-tree nodes |
+| `parentPrimaryId` | `string?` | Required when `nodeType: "hidden"` — the primary node that owns this sub-node |
 
 **Canvas coordinate layout:**
 
+Primary nodes (StoryPage canvas: `6700 × 4500`, MapView canvas: `6700 × 5500`):
+
 ```
-y ≈ 600–900   Better-outcome branches (screened out, CARES, unsubstantiated)
-y ≈ 1100      Supervision endpoint
-y ≈ 2000      Main spine: start → SCR → safety assessment → investigation → court
-y ≈ 2950–3550 Removal branches: foster care → kinship / group home
+y ≈ 600–900    Better-outcome exits (screened_out, cares_track, unsubstantiated)
+y ≈ 1100       Supervision endpoint (supervision_order)
+y ≈ 2000       Main spine: start → SCR → safety_assessment → investigation → court
+y ≈ 2950–3550  Removal branches: foster_care_removal → kinship_placement / group_home
 ```
 
-X spacing is ~650 px per depth column.
+Hidden node zones (MapView only — require `MAP_CANVAS_H = 5500`):
+
+```
+y ≈ 1350       CARES sub-tree (parent: cares_track)
+y ≈ 1500–2300  Supervision sub-tree (parent: supervision_order)
+y ≈ 2450       Fork node (parent: scr_screening)
+y ≈ 3400–5000  Foster care placement tree (parent: foster_care_removal)
+```
+
+X spacing is ~650 px per column for primary nodes; hidden nodes cluster near their parent's x position.
 
 **`edges` sync rule:** Every `nextNodeId` in a `choices` array must have a corresponding entry in the `edges` array. `EDGES` is used to draw SVG bezier curves in both views and to compute reverse traversal in `MapView`. There is no runtime validation — a mismatch silently drops an edge line.
 
+StoryPage filters edges to primary-only: both `edge.from` and `edge.to` must be non-hidden nodes.
+
 **Icon registry** (`src/config/iconRegistry.ts`):
 
-| `icon` string | Used for node |
-|--------------|---------------|
-| `"ShieldAlert"` | start |
-| `"Search"` | scr_screening |
-| `"XCircle"` | screened_out |
-| `"Shield"` | safety_assessment |
-| `"Handshake"` | cares_track |
-| `"EyeOff"` | investigation |
-| `"Scale"` | determination, court_hearing |
-| `"CheckCircle2"` | unsubstantiated |
-| `"ClipboardList"` | case_plan |
-| `"FileCheck"` | court_filing |
-| `"Home"` | supervision_order |
-| `"AlertTriangle"` | foster_care_removal |
-| `"Heart"` | kinship_placement |
-| `"Building2"` | group_home |
+| `icon` string | Used for |
+|--------------|----------|
+| `"ShieldAlert"` | `start` |
+| `"Search"` | `scr_screening` |
+| `"XCircle"` | `screened_out` |
+| `"Shield"` | `safety_assessment` |
+| `"Handshake"` | `cares_track`, `community_services`, `mandated_preventive` |
+| `"EyeOff"` | `investigation` |
+| `"Scale"` | `determination`, `court_hearing` |
+| `"CheckCircle2"` | `unsubstantiated`, `cares_success`, `supervision_success` |
+| `"ClipboardList"` | `case_plan`, `family_led_assessment` |
+| `"FileCheck"` | `court_filing`, `service_plan_cares`, `court_service_plan` |
+| `"Home"` | `supervision_order`, `family_setting_decision`, `traditional_foster_care_node` |
+| `"AlertTriangle"` | `foster_care_removal`, `traditional_investigation_loop`, `supervision_failure` |
+| `"Heart"` | `kinship_placement`, `placement_decision`, `kinship_foster_care` |
+| `"Building2"` | `group_home`, `residential_placement` |
+| `"Users"` | `fork`, `cares_entry`, `cares_main`, `supervision_intake` |
+| `"Stethoscope"` | `medical_needs_decision`, `specialized_foster_care` |
+| `"Brain"` | `trauma_decision`, `effc` |
 
 To add a new icon: import it from `lucide-react` in `iconRegistry.ts` and add an entry to `ICON_REGISTRY`.
 
@@ -790,38 +820,87 @@ Custom components receive `{ data: Record<string, unknown> }` and cast internall
 
 ## 7. The free-explore map (MapView)
 
-`MapView` uses the same `STORY_NODES` and `EDGES` data but works differently — it's a click-to-explore interface with no scroll or phases.
+`MapView` uses the same `STORY_NODES` and `EDGES` data but works differently — it's a click-to-explore interface with free zoom/pan and collapsible hidden node sub-trees.
 
 ### State
 
 | Variable | Type | Purpose |
 |----------|------|---------|
-| `activeNodeId` | `string \| null` | `null` = overview; set = zoomed to node |
-| `showOverlay` | `boolean` | Shows the three-panel detail card |
+| `activeNodeId` | `string \| null` | `null` = overview; set = zoomed to that node |
+| `showOverlay` | `boolean` | Detail overlay visibility (delayed 600ms after node zoom) |
 | `history` | `string[]` | Ordered list of previously visited node IDs |
-| `showHistoryDropdown` | `boolean` | History dropdown visibility |
+| `expandedNodeIds` | `Set<string>` | Primary node IDs whose hidden children are currently shown |
+| `userScale` | `number` | Current zoom level (`0` = auto-fit overview) |
+| `panOffset` | `{ x, y }` | Current canvas translate when in user-controlled zoom |
+| `isDragging` | `boolean` | Mouse/touch drag is in progress |
+| `isInteracting` | `boolean` | Wheel zoom is in progress (suppresses CSS transition) |
 | `viewport` | `{ w, h }` | Window dimensions (updated on resize) |
+
+### Derived data (useMemo)
+
+```
+expandableNodeIds  ←  Set of primary node IDs that have at least one hidden child
+visibleNodes       ←  primary nodes + hidden nodes whose parentPrimaryId ∈ expandedNodeIds
+visibleEdges       ←  EDGES where both from and to are in visibleNodes
+visibleNodeIds     ←  Set version of visibleNodes (used by overlay's incomingNodes)
+incomingNodes      ←  edges pointing to activeNode, filtered to visibleNodeIds
+```
 
 ### Camera
 
-The camera is a CSS `transition-transform duration-1000 cubic-bezier(0.25,1,0.5,1)` — unlike `StoryPage`, `MapView` uses CSS transitions because the transitions are triggered by click events, not scroll position.
+MapView uses the `MAP_CANVAS_H = 5500` canvas (vs `CANVAS_H = 4500` for StoryPage) to accommodate the foster care placement sub-tree that extends to y≈5000.
 
-- **Overview** (`activeNodeId === null`): canvas scaled to fill 90% of viewport, centered.
-- **Focused** (`activeNodeId` set): canvas translated so the selected node is at viewport centre. Scale: `1` desktop, `0.7` mobile.
+Two camera modes, both output a CSS `transform: translate(tx, ty) scale(s)` on the canvas div:
+
+- **Overview** (`activeNodeId === null`):
+  - `userScale === 0` → auto-fit: `scale = min(vw/CANVAS_W, vh/MAP_CANVAS_H) × 0.9`, centered
+  - `userScale > 0` → user-controlled: uses `userScale` + `panOffset` directly
+- **Focused** (`activeNodeId` set): node is translated to viewport centre; `scale = 1.0` (mobile: `0.7`)
+
+CSS transition (`transform 1000ms cubic-bezier(0.25,1,0.5,1)`) is active during node-focus transitions and when the user is idle. It is suppressed to `'none'` during drag and wheel zoom to prevent lag.
+
+### Free zoom / pan
+
+**Scroll wheel zoom** is attached via `addEventListener('wheel', handler, { passive: false })` (not React's `onWheel`) so `e.preventDefault()` can block native page scroll. Zoom is toward the cursor using the formula:
+
+```
+newTx = mx - ((mx - curTx) / curScale) × newScale
+```
+
+**Mouse drag** and **touch drag** record a drag origin on `mousedown`/`touchstart`, then update `panOffset` by the delta on each `mousemove`/`touchmove`. Starting a drag while `userScale === 0` first locks in the auto-fit transform as explicit `userScale` + `panOffset` values.
+
+A **Reset View** button appears in the nav bar when `userScale > 0`, and a **Collapse All** button appears when `expandedNodeIds.size > 0`.
+
+### Hidden node expand / collapse
+
+Primary nodes that have hidden children display a `+` / `−` badge in their top-right corner.
+
+**Click behaviour on overview:**
+
+```
+Click primary node
+  ├─ Has hidden children AND not yet expanded
+  │    → Add to expandedNodeIds (hidden nodes appear); no overlay
+  └─ Already expanded, or no hidden children
+       → handleNodeSelect → zoom to node + open detail overlay
+```
+
+**Navigate to hidden node** (via overlay "Next Choices" / "Previous Steps"):
+- `handleNodeSelect` auto-adds the node's `parentPrimaryId` to `expandedNodeIds` so the hidden node is visible before the camera zooms to it.
 
 ### Three-panel overlay
 
-When a node is active, a full-screen overlay appears with three panels:
+When a node is active, a full-screen overlay appears:
 
-- **Left wing** — "Possible Previous Steps": nodes computed by filtering `EDGES` where `edge.to === activeNodeId` (reverse traversal via `useMemo → incomingNodes`).
-- **Centre card** — Node title and description.
-- **Right wing** — "Next Choices": `activeNode.choices` array.
+- **Left wing** — "Possible Previous Steps" computed from `incomingNodes` (reverse edge traversal, filtered to currently visible nodes).
+- **Centre card** — Node title, description, and an "Expanded Detail" badge for hidden nodes.
+- **Right wing** — "Next Choices" from `activeNode.choices`.
 
-Clicking any choice/previous node calls `handleNodeSelect`, which pushes the current node to `history` and zooms to the new node. The overlay hides briefly during the camera transition (`scheduleOverlay` + 600ms timeout) to avoid content overlap during the zoom.
+The overlay hides briefly during camera transitions (`scheduleOverlay` + 600ms) to avoid layout overlap mid-zoom.
 
 ### On-mount behaviour
 
-On mount, `MapView` auto-zooms to `'start'` (300ms delay) and shows the overlay (900ms delay) so first-time visitors land on a node immediately. Both timeouts are cleaned up on unmount.
+On mount, `MapView` auto-zooms to `'start'` (300ms delay) and opens the overlay (900ms delay) so first-time visitors land on a node immediately. Both timeouts are cleaned up on unmount.
 
 ---
 
@@ -830,12 +909,13 @@ On mount, `MapView` auto-zooms to `'start'` (300ms delay) and shows the overlay 
 ### `src/config/constants.ts`
 
 ```ts
-export const CANVAS_W = 6700;          // canvas coordinate width (px)
-export const CANVAS_H = 4500;          // canvas coordinate height (px)
+export const CANVAS_W = 6700;          // canvas coordinate width (px) — shared
+export const CANVAS_H = 4500;          // canvas height used by StoryPage
+export const MAP_CANVAS_H = 5500;      // canvas height used by MapView (hidden nodes extend to y≈5000)
 export const MOBILE_BREAKPOINT = 768;  // matches Tailwind 'md'
 ```
 
-Both `StoryPage` and `MapView` import these. **Change once, updates both views.**
+`StoryPage` uses `CANVAS_H`; `MapView` uses `MAP_CANVAS_H`. The taller map canvas accommodates the foster care placement sub-tree without affecting the StoryPage overview camera scale.
 
 ### `src/config/categoryStyles.ts`
 
@@ -893,14 +973,24 @@ Open `src/data/config/nodes.json`. Find the node by its key and edit the relevan
 
 The stat appears automatically in the scroll experience. Order in `statisticIds` = order on screen.
 
-### Add a new node to the flowchart
+### Add a new primary node to the flowchart
 
-1. `src/data/config/nodes.json` — add a new entry under `nodes` with all required fields
-2. Set `x`/`y` to fit the canvas layout (see coordinate guide in §5)
+1. `src/data/config/nodes.json` — add a new entry under `nodes` with all required fields; omit `nodeType` (defaults to primary)
+2. Set `x`/`y` to fit the primary canvas layout (see coordinate guide in §5)
 3. Add directed edges to the `edges` array: `{ "from": "...", "to": "new-node-id" }`
 4. Add `choices` entries in the nodes that should link to it
 5. If using a new icon: add it to `src/config/iconRegistry.ts`
 6. If using a new `category`: add to `NodeCategory` in `types.ts` and `categoryStyles.ts`
+
+### Add hidden sub-nodes to an existing primary node
+
+Hidden nodes provide expanded detail visible only in MapView when the user clicks the `+` badge on a primary node.
+
+1. In `nodes.json`, add entries with `"nodeType": "hidden"` and `"parentPrimaryId": "target-primary-id"`
+2. Position them near the parent (see hidden node zone guide in §5); they live outside the `4500` StoryPage canvas height so keep y ≥ 1200 and avoid overlap with primary nodes
+3. Add edges connecting hidden nodes to each other and (at least one edge) from the primary node to a hidden node
+4. Do **not** add hidden nodes to any story `path[]` — they are MapView-only
+5. StoryPage automatically filters them out — no StoryPage changes needed
 
 ### Remove a node
 
@@ -975,22 +1065,23 @@ All scroll parameters are grouped at the top of `StoryPage.tsx` rather than spre
 |-------|----------|-------|
 | No runtime validation of `statisticIds` | `storyNodes.tsx` | A missing stat ID silently drops the phase; no error thrown |
 | No runtime validation of `edges` | `storyNodes.tsx` | A `nextNodeId` with no matching edge silently drops an SVG line |
-| Mobile map pan (touch-drag) not implemented | `MapView.tsx` | Mobile users can only tap nodes; no pinch-zoom or drag |
+| Touch pinch-zoom not implemented | `MapView.tsx` | Single-finger touch drag pans; two-finger pinch-zoom is not yet wired up |
 | Keyboard navigation missing | Both views | No `aria-label`, no keyboard-accessible scroll triggers |
+| No collapse-on-zoom for expanded groups | `MapView.tsx` | When zooming to a node inside an expanded sub-tree, sibling groups stay expanded |
 
 ### Possible next steps
 
 - **Additional character stories** — copy `maria.json`, change `path` and `nodeContent`, import in `App.tsx`
 - **Shareable URLs** — encode active node history as a query param in `MapView`
-- **Analytics** — PostHog or Mixpanel event on each phase transition
+- **Analytics** — PostHog or Mixpanel event on each phase transition and node expand
 - **Accessibility pass** — `aria-label` on all interactive elements, keyboard-accessible node navigation in `MapView`
 - **CMS integration** — replace `stories/` JSON files with Sanity or Contentful; `nodes.json` and `statistics.json` could stay local or move as well
 - **New chart types** — add to `types.ts` union, implement renderer in `charts/`, register in `StatRenderer.tsx`
+- **Touch pinch-zoom** — track two-finger distance in `onTouchMove` and update `userScale` proportionally
 
 ---
 
 ## Source material
 
 - `story.md` — Original narrative brief from The Bronx Defenders
-- `flowchart.txt` — Initial canvas layout diagram
-- `CONFIG_REFACTOR.md` — Full specification for the JSON-driven content architecture
+- `flowchart.md` — Canvas layout diagram and node coordinate reference
