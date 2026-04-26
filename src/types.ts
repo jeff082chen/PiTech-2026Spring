@@ -385,10 +385,16 @@ export interface StoryIntro {
   description: string;
 }
 
+export interface StoryAction {
+  label: string;
+  description?: string;
+  url?: string;
+}
+
 export interface StoryEnding {
   title: string;
   description: string;
-  actions?: string[]; // call-to-action items shown at the end of the story
+  actions?: StoryAction[];
 }
 
 export interface StoryConfig {

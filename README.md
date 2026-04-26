@@ -91,7 +91,7 @@ src/
 │   │   ├── nodes.json             ← EDIT HERE: 37 nodes (15 primary + 22 hidden) + 37 edges
 │   │   └── statistics.json        ← EDIT HERE: all 21 stat charts (declarative schema)
 │   └── stories/
-│       └── maria.json             ← EDIT HERE: Maria's story text, path, intro, ending
+│       └── story.json             ← EDIT HERE: the active story (path, text, character, CTA)
 │
 └── components/
     ├── StoryPage.tsx              Scroll-driven narrative experience (primary view)
@@ -138,7 +138,7 @@ src/
 
 | You want to change… | Edit this file |
 |---------------------|---------------|
-| Story text, quotes, callouts | `src/data/stories/maria.json` |
+| Story text, quotes, callouts | `src/data/stories/story.json` |
 | A statistic's numbers or chart data | `src/data/config/statistics.json` |
 | A node's title, description, icon, position | `src/data/config/nodes.json` |
 | Which statistics appear on a node | `src/data/config/nodes.json` → `statisticIds` |
@@ -171,14 +171,14 @@ src/data/config/nodes.json       ← Layer 1: system graph (nodes, edges, positi
                                          │
                                          └── StatRenderer → BigNumber / Pipeline / ...
 
-src/data/stories/maria.json      ← Layer 3: character-specific narrative
+src/data/stories/story.json      ← Layer 3: the active story narrative
 ```
 
 **Layer 1 — System graph** defines the institutional flowchart: **37 nodes** (15 primary + 22 hidden) and **37 directed edges**. Primary nodes are shared by both views and all stories. Hidden nodes have `nodeType: "hidden"` and a `parentPrimaryId`; they are invisible in StoryPage and collapsed by default in MapView — users expand them by clicking the `+` badge on a primary node.
 
 **Layer 2 — Statistics** is a declarative JSON registry of all 21 stat entries. Each entry has a `chart` object with a `type` field; `StatRenderer` reads the type and dispatches to the correct renderer component. The renderer turns JSON data into a React visual — no JSX in the data file.
 
-**Layer 3 — Story config** (`StoryConfig`) defines one character's journey: which nodes they pass through (`path[]`), the personal story text for each node (`nodeContent`), and the intro/ending screens. A new character = a new JSON file, zero component changes. Story paths use only primary nodes.
+**Layer 3 — Story config** (`StoryConfig`) defines one character's journey: which nodes they pass through (`path[]`), the personal story text for each node (`nodeContent`), and the intro/ending screens. The active story is always `src/data/stories/story.json` — this is the single file the app loads. Story paths use only primary nodes.
 
 ### Runtime data flow
 
@@ -188,7 +188,7 @@ nodes.json
     │  cfg.statisticIds[] ─→ statistics.json → StatRenderer → chart renderers
     └─────────────────────────────────────────────────────────→ StoryNode[]
 
-stories/maria.json ──────────────────────────────────────────→ StoryPage
+stories/story.json ──────────────────────────────────────────→ StoryPage
                                              path[] → node sequence
                                              nodeContent → story card text
                                              character/intro/ending → screens
@@ -198,7 +198,7 @@ stories/maria.json ────────────────────�
 
 ## Visual Builder UIs
 
-Two in-browser tools allow editing `nodes.json`, `statistics.json`, and `maria.json` without writing JSON by hand. They are hidden in production — access them from the dev server (`npm run dev`).
+Two in-browser tools allow editing `nodes.json`, `statistics.json`, and `story.json` without writing JSON by hand. They are hidden in production — access them from the dev server (`npm run dev`).
 
 ### How to open
 
@@ -215,7 +215,7 @@ Both open as full-screen overlays. Click **← Back** / **← Site** to return t
 
 ### Story Builder
 
-Edits the narrative story file (e.g. `maria.json`). Three-column workspace:
+Edits the narrative story file (`story.json`). Three-column workspace:
 
 | Panel | What it does |
 |-------|-------------|
@@ -300,9 +300,9 @@ The following sections are written for researchers and content editors at The Br
 
 ---
 
-### Editing Story Text — `src/data/stories/maria.json`
+### Editing Story Text — `src/data/stories/story.json`
 
-This file controls everything a visitor reads during the scrollytelling experience.
+**This is the single file the app renders.** Everything a visitor reads — the character intro, story text at each node, and the ending CTA — lives here. No code changes are needed to update the story.
 
 #### Top-level fields
 
@@ -329,12 +329,32 @@ This file controls everything a visitor reads during the scrollytelling experien
     "title": "The System Stays",
     "description": "Maria's case is eventually closed...",
     "actions": [
-      "Support The Bronx Defenders...",
-      "Advocate for direct financial support to families in poverty"
+      {
+        "label": "Support The Bronx Defenders",
+        "description": "Brief description of this action.",
+        "url": "https://www.bronxdefenders.org"
+      },
+      {
+        "label": "Advocate for direct financial support to families in poverty",
+        "description": "Poverty is not neglect.",
+        "url": ""
+      }
     ]
   }
 }
 ```
+
+#### `ending.actions` — Get Involved CTA
+
+Each item in `actions` renders as a call-to-action bullet at the end of the story.
+
+| Field | Required | Description |
+|-------|----------|-------------|
+| `label` | ✅ | Heading text for this action |
+| `description` | — | Supporting sentence shown below the label |
+| `url` | — | If set, the item renders as a clickable link with an external-link icon. Leave `""` for plain text. |
+
+These can be edited in the **Story Builder** under "Ending Screen → Get Involved — CTA items".
 
 #### `nodeContent` — story text per node
 
@@ -1028,7 +1048,7 @@ Renders a fully custom React component. Use this when the visual is too bespoke 
 
 ### Add a New Story Character
 
-1. Copy `src/data/stories/maria.json` to `src/data/stories/[name].json`.
+1. Copy `src/data/stories/story.json` to `src/data/stories/[name].json`.
 2. Change `"id"`, `"character"`, `"intro"`, `"ending"`.
 3. Set `"path"` to an ordered list of node IDs (see [Node ID Reference](#node-id-reference)).
 4. Add a `"nodeContent"` entry for each node in the path.
@@ -1273,6 +1293,52 @@ interface NodeStatistic  // runtime stat: { id, component: ReactElement, sources
 // Story
 interface StoryConfig    // one character's full narrative (path + nodeContent + ending)
 type StoryContentBlock   // text | quote | callout | image
+```
+
+---
+
+### Update the Logo / Branding
+
+The logo and partner line are controlled by `BRANDING_CONFIG` at the top of `src/components/StoryPage.tsx`:
+
+```ts
+const BRANDING_CONFIG = {
+  show:        true,                // set to false to hide the logo
+  logoSrc:     bronxDefendersLogo,  // points to src/assets/bronx-defenders-logo.png
+  logoAlt:     'The Bronx Defenders',
+  partnerLine: 'The Bronx Defenders × PiTech',
+} as const;
+```
+
+**To replace the logo:** drop your new file into `src/assets/` and either rename it `bronx-defenders-logo.png` (replaces in place) or update the `import` at the top of `StoryPage.tsx` to point to the new filename.
+
+**To change the partner credit line:** edit `partnerLine` — this text appears on the hero screen below the intro title.
+
+---
+
+### Customize the Content Warning
+
+The content warning overlay is controlled by `WARNING_CONFIG` at the top of `src/components/ContentWarning.tsx`. Edit the values in that block — no React knowledge needed.
+
+```ts
+const WARNING_CONFIG = {
+  rememberDismissal: true,  // false = show on every page load
+
+  title: 'Content Warning',
+  intro: 'This experience contains descriptions of:',
+  topics: [
+    'Family separation and child removal',
+    // ... add or remove topics here
+  ],
+
+  supportText:      'If you or someone you know needs support: ',
+  supportLinkLabel: 'The Bronx Defenders',
+  supportLinkUrl:   'https://www.bronxdefenders.org',  // set to '' to hide
+
+  confirmLabel: 'I understand — Continue',
+  exitLabel:    'Leave this site',
+  exitUrl:      '',  // set to a URL to show an exit button
+} as const;
 ```
 
 ---

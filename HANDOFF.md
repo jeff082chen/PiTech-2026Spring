@@ -55,6 +55,10 @@ src/
 ├── main.tsx                       React entry point
 ├── index.css                      Tailwind directives only
 ├── types.ts                       All shared TypeScript interfaces
+├── vite-env.d.ts                  Vite client type declarations (PNG imports, etc.)
+│
+├── assets/
+│   └── bronx-defenders-logo.png  ← REPLACE to update the logo (keep the filename)
 │
 ├── config/
 │   ├── constants.ts               CANVAS_W/H, MAP_CANVAS_H, MOBILE_BREAKPOINT
@@ -67,11 +71,12 @@ src/
 │   │   ├── nodes.json             37 nodes (15 primary + 22 hidden) + 37 directed edges
 │   │   └── statistics.json        21 chart schemas (pure JSON — edit here)
 │   └── stories/
-│       └── maria.json             Maria's narrative (path, story text, character — pure JSON)
+│       └── story.json             ← EDIT HERE: the active story (path, text, character, CTA)
 │
 └── components/
     ├── StoryPage.tsx              Scroll-driven narrative (primary view)
     ├── MapView.tsx                Free-explore map: zoom/pan + expand hidden nodes
+    ├── ContentWarning.tsx         Full-screen content warning overlay (configure via WARNING_CONFIG)
     ├── builder/                   Story narrative editor (StoryBuilder UI)
     │   ├── StoryBuilder.tsx       Top-level builder shell
     │   ├── BlockEditor.tsx        Story block editing panel
@@ -129,7 +134,7 @@ src/
 `App.tsx` holds a single `currentView: 'story' | 'map' | 'builder' | 'graph-editor'` state — no routing library needed.
 
 ```
-default            → <StoryPage storyConfig={MARIA_STORY} onExploreMap={...} />
+default            → <StoryPage storyConfig={THE_STORY} onExploreMap={...} />
 "Explore Full Map" → <MapView onBackToLanding={...} />
 "Home"             → back to StoryPage
 "Story Builder"*   → <StoryBuilder onExit={...} onOpenGraphEditor={...} />
@@ -319,7 +324,7 @@ All content is now **pure JSON** — no React knowledge needed to edit nodes, st
 ```
 data/config/nodes.json      ← System graph  (shared by both views and all stories)
 data/config/statistics.json ← Chart schemas (attached to nodes by ID reference)
-data/stories/maria.json     ← Narrative config (one per character — path + story text)
+data/stories/story.json     ← Narrative config (one per character — path + story text)
 ```
 
 The adapter file `src/data/storyNodes.tsx` wires these together at startup into the `StoryNode[]` format that `StoryPage` and `MapView` expect.
@@ -336,7 +341,7 @@ statistics.json ──→ StatRenderer ──→ chart renderers → stat panel
                    switch(chart.type) → BigNumber / Pipeline / LineChart / …
                    "component" → customRegistry → WarrantBox / PlacementInstability
 
-maria.json ───────────────────────────────────→ StoryPage
+story.json ───────────────────────────────────→ StoryPage
                                          path[] → node sequence
                                          nodeContent → story card blocks
                                          character/intro/ending → screens
@@ -449,7 +454,7 @@ See **§6** for the full chart type reference.
 
 ---
 
-### Layer 3 — Narrative config (`src/data/stories/maria.json`)
+### Layer 3 — Narrative config (`src/data/stories/story.json`)
 
 One file per character. **No JSX, no React imports** — fully JSON-serializable.
 
@@ -487,7 +492,13 @@ One file per character. **No JSX, no React imports** — fully JSON-serializable
   "ending": {
     "title": "The System Stays",
     "description": "...",
-    "actions": ["CTA bullet 1", "CTA bullet 2"]
+    "actions": [
+      {
+        "label": "Support The Bronx Defenders",     // heading text
+        "description": "Brief supporting sentence.", // shown below label (optional)
+        "url": "https://www.bronxdefenders.org"      // set to "" for plain text (no link)
+      }
+    ]
   }
 }
 ```
@@ -982,7 +993,7 @@ Both builders open as full-screen overlays. Click **← Back / ← Site** to ret
 
 ### Story Builder
 
-Edits `maria.json` (or any story config). Three-column layout:
+Edits `story.json` (or any story config). Three-column layout:
 
 | Panel | Purpose |
 |-------|---------|
@@ -1062,23 +1073,23 @@ Replace `src/data/config/nodes.json` and `src/data/config/statistics.json` with 
 
 ### Edit story text for an existing node
 
-Open `src/data/stories/maria.json`. Find the `nodeContent[nodeId]` entry and edit the `blocks` array.
+Open `src/data/stories/story.json`. Find the `nodeContent[nodeId]` entry and edit the `blocks` array.
 
 Supported block types: `text`, `quote`, `callout`, `image` — see §5 Layer 3 for field reference.
 
 ### Add a new character story
 
-1. Copy `src/data/stories/maria.json` → `src/data/stories/[name].json`
+1. Copy `src/data/stories/story.json` → `src/data/stories/[name].json`
 2. Change `id` to a unique string (e.g. `"jose"`)
-3. Update `character`, `intro`, `ending`
+3. Update `character`, `intro`, `ending` (including `ending.actions` objects)
 4. Set `path[]` to an ordered list of valid node IDs from `nodes.json`
 5. Add `nodeContent[nodeId]` blocks for each node in `path`
-6. In `App.tsx`:
+6. In `App.tsx`, change the import:
    ```ts
-   import joseJson from './data/stories/jose.json';
-   const JOSE_STORY = joseJson as StoryConfig;
-   // pass to <StoryPage storyConfig={JOSE_STORY} ... />
+   import storyJson from './data/stories/jose.json'; // swap the filename
    ```
+
+> **Note:** The app always renders the file imported as `storyJson` in `App.tsx`. Only one story is active at a time.
 
 ### Edit node title, description, or position
 
@@ -1163,7 +1174,7 @@ All chart renderers use `AccentColor` string tokens (`"red"`, `"amber"`, etc.) r
 |-------|--------------|---------|-------------|
 | System graph (`nodes.json`) | ✅ Yes | Yes — both views, all stories | The institution's structure doesn't change between characters |
 | Statistics (`statistics.json`) | ✅ Yes | Via `statisticIds` reference | Visual complexity lives here, not in story text |
-| Narrative (`maria.json`) | ✅ Yes | No — one per character | Each character has a different path and personal voice |
+| Narrative (`story.json`) | ✅ Yes | No — one per character | Each character has a different path and personal voice |
 
 ### No routing library
 
@@ -1172,6 +1183,40 @@ With two views, a `useState` in `App.tsx` is all that's needed. React Router wou
 ### Single `SCROLL_CONFIG` object
 
 All scroll parameters are grouped at the top of `StoryPage.tsx` rather than spread throughout the JSX. When a designer says "the camera zooms in too fast", you change one number in one place rather than hunting for magic values.
+
+### Content warning (`ContentWarning.tsx`)
+
+A full-screen overlay shown before the story begins. All configurable text lives in `WARNING_CONFIG` at the top of `src/components/ContentWarning.tsx`:
+
+```ts
+const WARNING_CONFIG = {
+  rememberDismissal: true, // false = show on every page load
+  title:  'Content Warning',
+  intro:  'This experience contains descriptions of:',
+  topics: ['Family separation and child removal', ...],
+  supportLinkUrl:   'https://www.bronxdefenders.org', // '' to hide
+  supportLinkLabel: 'The Bronx Defenders',
+  confirmLabel: 'I understand — Continue',
+  exitUrl: '',  // set to a URL to show an exit button
+} as const;
+```
+
+Dismissal state is stored in `localStorage` under the key `'family-policing-warning-dismissed'`. To reset (e.g. for testing), clear that key from DevTools → Application → Local Storage. The component renders `null` once dismissed, so there is no performance cost to leaving it mounted.
+
+### Logo / branding (`StoryPage.tsx → BRANDING_CONFIG`)
+
+Logo and partner line are configured in `BRANDING_CONFIG` at the top of `StoryPage.tsx`:
+
+```ts
+const BRANDING_CONFIG = {
+  show:        true,
+  logoSrc:     bronxDefendersLogo,  // imported from src/assets/bronx-defenders-logo.png
+  logoAlt:     'The Bronx Defenders',
+  partnerLine: 'The Bronx Defenders × PiTech',
+} as const;
+```
+
+To swap the logo: drop the new file into `src/assets/` and either keep the filename `bronx-defenders-logo.png` (no code change needed) or update the import at the top of `StoryPage.tsx`.
 
 ---
 
@@ -1189,7 +1234,7 @@ All scroll parameters are grouped at the top of `StoryPage.tsx` rather than spre
 
 ### Possible next steps
 
-- **Additional character stories** — copy `maria.json`, change `path` and `nodeContent`, import in `App.tsx`
+- **Additional character stories** — copy `story.json`, change `path` and `nodeContent`, import in `App.tsx`
 - **Shareable URLs** — encode active node history as a query param in `MapView`
 - **Analytics** — PostHog or Mixpanel event on each phase transition and node expand
 - **Accessibility pass** — `aria-label` on all interactive elements, keyboard-accessible node navigation in `MapView`

@@ -149,7 +149,7 @@ export default function PreviewPane({ story, onClose }: Props) {
                   {ending.actions.map((action, i) => (
                     <li key={i} className="text-sm text-neutral-500 flex gap-2">
                       <span className="text-red-500">→</span>
-                      {action}
+                      {action.label}
                     </li>
                   ))}
                 </ul>

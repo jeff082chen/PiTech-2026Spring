@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import type { StoryConfig, StoryCharacter, StoryIntro, StoryEnding } from '../../types';
+import type { StoryConfig, StoryCharacter, StoryIntro, StoryEnding, StoryAction } from '../../types';
 
 interface Props {
   story: StoryConfig;
@@ -26,11 +26,11 @@ export default function MetadataEditor({ story, onChange }: Props) {
     onChange({ ending: { ...ending, ...patch } });
 
   const addAction = () =>
-    updateEnding({ actions: [...actions, ''] });
+    updateEnding({ actions: [...actions, { label: '', description: '', url: '' }] });
 
-  const updateAction = (i: number, val: string) => {
+  const updateAction = (i: number, patch: Partial<StoryAction>) => {
     const next = [...actions];
-    next[i] = val;
+    next[i] = { ...next[i], ...patch };
     updateEnding({ actions: next });
   };
 
@@ -155,24 +155,50 @@ export default function MetadataEditor({ story, onChange }: Props) {
 
             {/* Call-to-action items */}
             <div>
-              <label className={labelCls}>Call-to-action items</label>
-              <div className="space-y-1.5">
+              <label className={labelCls}>Get Involved — CTA items</label>
+              <div className="space-y-3">
                 {actions.map((action, i) => (
-                  <div key={i} className="flex gap-1.5">
-                    <input
-                      type="text"
-                      value={action}
-                      onChange={e => updateAction(i, e.target.value)}
-                      placeholder={`Action item ${i + 1}`}
-                      className={`${inputCls} flex-1`}
-                    />
-                    <button
-                      onClick={() => removeAction(i)}
-                      className="text-neutral-600 hover:text-red-400 px-2 text-sm transition-colors"
-                      title="Remove"
-                    >
-                      ✕
-                    </button>
+                  <div key={i} className="border border-neutral-800 rounded p-2.5 space-y-1.5">
+                    <div className="flex items-center justify-between mb-0.5">
+                      <span className="text-xs text-neutral-600">Item {i + 1}</span>
+                      <button
+                        onClick={() => removeAction(i)}
+                        className="text-neutral-600 hover:text-red-400 text-xs transition-colors"
+                        title="Remove"
+                      >
+                        ✕ Remove
+                      </button>
+                    </div>
+                    <div>
+                      <label className={labelCls}>Label (shown as the link/heading)</label>
+                      <input
+                        type="text"
+                        value={action.label}
+                        onChange={e => updateAction(i, { label: e.target.value })}
+                        placeholder="e.g. Support The Bronx Defenders"
+                        className={inputCls}
+                      />
+                    </div>
+                    <div>
+                      <label className={labelCls}>Description (optional — shown below the label)</label>
+                      <input
+                        type="text"
+                        value={action.description ?? ''}
+                        onChange={e => updateAction(i, { description: e.target.value })}
+                        placeholder="Brief explanation of this action"
+                        className={inputCls}
+                      />
+                    </div>
+                    <div>
+                      <label className={labelCls}>URL (optional — leave blank to show as plain text)</label>
+                      <input
+                        type="url"
+                        value={action.url ?? ''}
+                        onChange={e => updateAction(i, { url: e.target.value })}
+                        placeholder="https://..."
+                        className={inputCls}
+                      />
+                    </div>
                   </div>
                 ))}
               </div>
@@ -180,7 +206,7 @@ export default function MetadataEditor({ story, onChange }: Props) {
                 onClick={addAction}
                 className="mt-2 text-xs text-neutral-500 hover:text-neutral-300 transition-colors flex items-center gap-1"
               >
-                <span className="text-base leading-none">+</span> Add item
+                <span className="text-base leading-none">+</span> Add CTA item
               </button>
             </div>
           </section>

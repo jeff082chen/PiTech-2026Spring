@@ -1,12 +1,16 @@
 import { useState } from 'react';
-import StoryPage    from './components/StoryPage';
-import MapView      from './components/MapView';
-import StoryBuilder from './components/builder/StoryBuilder';
-import GraphEditor  from './components/graph-editor/GraphEditor';
+import StoryPage      from './components/StoryPage';
+import MapView        from './components/MapView';
+import StoryBuilder   from './components/builder/StoryBuilder';
+import GraphEditor    from './components/graph-editor/GraphEditor';
+import ContentWarning from './components/ContentWarning';
 import type { StoryConfig } from './types';
-import mariaJson from './data/stories/maria.json';
+// ─── Active story ─────────────────────────────────────────────────────────────
+// To change the story, edit src/data/stories/story.json.
+// That file is the single source of truth rendered on the public site.
+import storyJson from './data/stories/story.json';
 
-const MARIA_STORY = mariaJson as StoryConfig;
+const THE_STORY = storyJson as StoryConfig;
 
 type View = 'story' | 'map' | 'builder' | 'graph-editor';
 
@@ -27,8 +31,9 @@ export default function App() {
 
   return (
     <>
+      <ContentWarning />
       <StoryPage
-        storyConfig={MARIA_STORY}
+        storyConfig={THE_STORY}
         onExploreMap={() => setCurrentView('map')}
       />
       {/* Internal tool access — not surfaced in the public UI */}

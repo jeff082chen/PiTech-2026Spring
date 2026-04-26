@@ -1,10 +1,23 @@
 import { useState, useEffect, useMemo } from 'react';
 import type { ReactNode } from 'react';
-import { Map, ChevronDown } from 'lucide-react';
+import { Map, ChevronDown, ExternalLink } from 'lucide-react';
+import bronxDefendersLogo from '../assets/bronx-defenders-logo.png';
 import STORY_NODES, { EDGES } from '../data/storyNodes';
 import type { StoryConfig, StoryContentBlock } from '../types';
 import { CANVAS_W, CANVAS_H, MOBILE_BREAKPOINT } from '../config/constants';
 import { BORDER_COLOR, CATEGORY_LABEL, CATEGORY_LEFT_BORDER } from '../config/categoryStyles';
+
+// ─── Branding config ──────────────────────────────────────────────────────────
+// To update the logo: replace src/assets/bronx-defenders-logo.png with your file
+// (keep the same filename), or update logoSrc below to import a different file.
+// Set show: false to hide the logo entirely.
+
+const BRANDING_CONFIG = {
+  show:       true,
+  logoSrc:    bronxDefendersLogo,
+  logoAlt:    'The Bronx Defenders',
+  partnerLine: 'The Bronx Defenders × PiTech',
+} as const;
 
 // ─── Animation & layout config ────────────────────────────────────────────────
 // All scroll pacing, camera, transition, and layout parameters live here.
@@ -422,15 +435,31 @@ export default function StoryPage({ storyConfig, onExploreMap }: Props) {
             style={{ background: 'radial-gradient(ellipse 60% 50% at 50% 50%, rgba(239,68,68,0.06) 0%, transparent 70%)' }}
           />
           <div className="relative text-center max-w-3xl space-y-5 z-10">
+            {BRANDING_CONFIG.show && (
+              <img
+                src={BRANDING_CONFIG.logoSrc}
+                alt={BRANDING_CONFIG.logoAlt}
+                className="h-8 opacity-60 mx-auto"
+              />
+            )}
             <p className="text-neutral-500 text-xs font-bold uppercase tracking-widest">{storyConfig.intro.title}</p>
-            <p className="text-red-400 text-xs font-bold uppercase tracking-widest -mt-2">The Bronx Defenders × PiTech</p>
+            <p className="text-red-400 text-xs font-bold uppercase tracking-widest -mt-2">{BRANDING_CONFIG.partnerLine}</p>
             <h1 className="text-6xl md:text-8xl font-black text-white leading-none">{storyConfig.character.name}</h1>
             <div className="w-16 h-1 bg-red-500 mx-auto rounded-full" />
             <p className="text-neutral-300 text-xl leading-relaxed max-w-2xl mx-auto">{storyConfig.character.summary}</p>
             <p className="text-neutral-500 text-sm max-w-xl mx-auto">{storyConfig.intro.description}</p>
-            <div className="flex flex-col items-center gap-2 text-neutral-600 text-sm pt-4 animate-bounce">
-              <span>Scroll to begin</span>
-              <ChevronDown className="w-4 h-4" />
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-5 pt-4">
+              <div className="flex flex-col items-center gap-2 text-neutral-600 text-sm animate-bounce">
+                <span>Scroll to begin</span>
+                <ChevronDown className="w-4 h-4" />
+              </div>
+              <button
+                onClick={onExploreMap}
+                className="flex items-center gap-2 px-5 py-2.5 border border-neutral-700 text-neutral-400 hover:text-neutral-200 hover:border-neutral-500 rounded-full text-sm font-medium transition-colors"
+              >
+                <Map className="w-4 h-4" />
+                View System Map
+              </button>
             </div>
           </div>
         </div>
@@ -582,13 +611,39 @@ export default function StoryPage({ storyConfig, onExploreMap }: Props) {
               <p className="text-neutral-300 text-lg leading-relaxed">{storyConfig.ending.description}</p>
               {storyConfig.ending.actions && storyConfig.ending.actions.length > 0 && (
                 <div className="border border-neutral-800 rounded-2xl p-6 space-y-4">
-                  <p className="text-xs font-bold uppercase tracking-widest text-neutral-500">What Can Be Done</p>
-                  <div className="space-y-3">
-                    {storyConfig.ending.actions.map(action => (
-                      <div key={action} className="flex gap-3 text-sm text-neutral-400">
-                        <span className="text-red-500 shrink-0 mt-0.5">→</span>
-                        <span>{action}</span>
-                      </div>
+                  <p className="text-xs font-bold uppercase tracking-widest text-neutral-500">Get Involved</p>
+                  <div className="space-y-4">
+                    {storyConfig.ending.actions.map((action, i) => (
+                      action.url ? (
+                        <a
+                          key={i}
+                          href={action.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-start gap-3 text-sm text-neutral-300 hover:text-white transition-colors group"
+                        >
+                          <span className="text-red-500 shrink-0 mt-0.5 group-hover:text-red-400 transition-colors">→</span>
+                          <span className="flex flex-col gap-0.5">
+                            <span className="font-semibold flex items-center gap-1.5">
+                              {action.label}
+                              <ExternalLink className="w-3 h-3 opacity-50" />
+                            </span>
+                            {action.description && (
+                              <span className="text-neutral-500 text-xs leading-relaxed">{action.description}</span>
+                            )}
+                          </span>
+                        </a>
+                      ) : (
+                        <div key={i} className="flex items-start gap-3 text-sm text-neutral-400">
+                          <span className="text-red-500 shrink-0 mt-0.5">→</span>
+                          <span className="flex flex-col gap-0.5">
+                            <span>{action.label}</span>
+                            {action.description && (
+                              <span className="text-neutral-500 text-xs leading-relaxed">{action.description}</span>
+                            )}
+                          </span>
+                        </div>
+                      )
                     ))}
                   </div>
                 </div>

@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback } from 'react';
 import type { StoryConfig, StoryNodeContent, StoryContentBlock } from '../../types';
-import mariaJson from '../../data/stories/maria.json';
+import storyJson from '../../data/stories/story.json';
 
 import MetadataEditor  from './MetadataEditor';
 import PathBuilder     from './PathBuilder';
@@ -8,7 +8,7 @@ import NodeEditor      from './NodeEditor';
 import StatsLibrary    from './StatsLibrary';
 import PreviewPane     from './PreviewPane';
 
-const MARIA_STORY = mariaJson as StoryConfig;
+const MARIA_STORY = storyJson as unknown as StoryConfig;
 
 const EMPTY_STORY: StoryConfig = {
   id: '',
