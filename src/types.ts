@@ -366,11 +366,23 @@ export type StoryContentBlock =
   | { type: 'quote';   text: string; attribution?: string }
   | { type: 'callout'; text: string };
 
+// ─── Story image ──────────────────────────────────────────────────────────────
+// Images bound to a story node (not the flowchart). Placed in public/story-images/
+// and referenced as "/story-images/filename.jpg". Rendered before statistics in
+// the scroll sequence using the same right-panel animation as stat panels.
+
+export interface StoryImage {
+  src:      string;    // e.g. "/story-images/my-photo.jpg"
+  caption?: string;
+  alt?:     string;
+}
+
 // ─── Story config (character-specific narrative layer) ───────────────────────
 // One StoryConfig per character story — driven by JSON/TS data, no JSX
 
 export interface StoryNodeContent {
   blocks: StoryContentBlock[];
+  images?: StoryImage[];  // shown before statistics in the per-node scroll sequence
 }
 
 export interface StoryCharacter {

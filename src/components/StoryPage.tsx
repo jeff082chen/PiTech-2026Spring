@@ -32,6 +32,7 @@ const SCROLL_CONFIG = {
     move:     1.0,    // pan to node at normal scale
     focus:    1.0,    // zoom-in phase (camera zooms from normal → big)
     story:    1.2,
+    image:    1.0,    // one story image panel (before statistics)
     stat:     1.0,
     zoomOut:  1.0,    // zoom-out phase (camera zooms from big → normal)
     ending:   1.2,
@@ -51,6 +52,7 @@ const SCROLL_CONFIG = {
     focusStart: 0.12,  // opacity at start of node-focus phase (lerps → focusEnd)
     focusEnd:   0.45,  // opacity at end of node-focus phase (lighter — story fades in at this level)
     story:      0.60,  // flowchart partially visible behind story card
+    image:      0.60,  // same as story for consistency
     stat:       0.60,  // same as story for consistency
     ending:     0.95,
   },
@@ -134,6 +136,7 @@ type Phase = {
   | { type: 'node-move';     nodeId: string }
   | { type: 'node-zoom-in';  nodeId: string }
   | { type: 'node-story';    nodeId: string }
+  | { type: 'node-image';    nodeId: string; imageIndex: number }
   | { type: 'node-stat';     nodeId: string; statIndex: number }
   | { type: 'node-zoom-out'; nodeId: string }
   | { type: 'ending' }
@@ -156,13 +159,17 @@ function buildPhases(storyConfig: StoryConfig, vh: number): Phase[] {
   push({ type: 'hero', startY: y, height: h('hero'), camStart: OVERVIEW_KF, camEnd: OVERVIEW_KF });
 
   for (const nodeId of storyConfig.path) {
-    const statCount = STORY_NODES[nodeId]?.statistics?.length ?? 0;
+    const statCount  = STORY_NODES[nodeId]?.statistics?.length ?? 0;
+    const imageCount = storyConfig.nodeContent[nodeId]?.images?.length ?? 0;
     const normalKF: CameraKF = { nodeId, scale: cam.normalScale };
     const bigKF:    CameraKF = { nodeId, scale: cam.bigScale };
 
     push({ type: 'node-move',     nodeId, startY: y, height: h('move'),    camStart: prevCamEnd, camEnd: normalKF });
     push({ type: 'node-zoom-in',  nodeId, startY: y, height: h('focus'),   camStart: normalKF,   camEnd: bigKF    });
     push({ type: 'node-story',    nodeId, startY: y, height: h('story'),   camStart: bigKF,      camEnd: bigKF    });
+    for (let i = 0; i < imageCount; i++) {
+      push({ type: 'node-image', nodeId, imageIndex: i, startY: y, height: h('image'), camStart: bigKF, camEnd: bigKF });
+    }
     for (let i = 0; i < statCount; i++) {
       push({ type: 'node-stat', nodeId, statIndex: i, startY: y, height: h('stat'), camStart: bigKF, camEnd: bigKF });
     }
@@ -280,15 +287,17 @@ export default function StoryPage({ storyConfig, onExploreMap }: Props) {
   // Derived state
   const cameraNodeId =
     phase.type === 'node-move'    || phase.type === 'node-zoom-in' ||
-    phase.type === 'node-story'   || phase.type === 'node-stat'    ||
-    phase.type === 'node-zoom-out'
+    phase.type === 'node-story'   || phase.type === 'node-image'   ||
+    phase.type === 'node-stat'    || phase.type === 'node-zoom-out'
       ? phase.nodeId : null;
 
   const isStat      = phaseType === 'node-stat';
-  const showContent = phaseType === 'node-story' || phaseType === 'node-stat';
+  const isImage     = phaseType === 'node-image';
+  const showContent = phaseType === 'node-story' || phaseType === 'node-image' || phaseType === 'node-stat';
   const isMobile    = vw < MOBILE_BREAKPOINT;
 
-  const currentStatIndex = phase.type === 'node-stat' ? phase.statIndex : -1;
+  const currentStatIndex  = phase.type === 'node-stat'  ? phase.statIndex  : -1;
+  const currentImageIndex = phase.type === 'node-image' ? phase.imageIndex : -1;
 
   // Focus hint: shown during zoom-in phase
   const focusNodeId  = phase.type === 'node-move' || phase.type === 'node-zoom-in' ? phase.nodeId : null;
@@ -304,7 +313,7 @@ export default function StoryPage({ storyConfig, onExploreMap }: Props) {
   const activeNodeTextOpacity =
     phaseType === 'node-move'     ? 1 :
     phaseType === 'node-zoom-in'  ? 1 - te :
-    phaseType === 'node-story' || phaseType === 'node-stat' ? 0 :
+    phaseType === 'node-story' || phaseType === 'node-image' || phaseType === 'node-stat' ? 0 :
     phaseType === 'node-zoom-out' ? te :
     1;
 
@@ -315,6 +324,7 @@ export default function StoryPage({ storyConfig, onExploreMap }: Props) {
     phaseType === 'node-move'     ? overlay.focusStart :
     phaseType === 'node-zoom-in'  ? lerp(overlay.focusStart, overlay.focusEnd, te) :
     phaseType === 'node-story'    ? overlay.story :
+    phaseType === 'node-image'    ? overlay.image :
     phaseType === 'node-stat'     ? overlay.stat :
     phaseType === 'node-zoom-out' ? lerp(overlay.story, overlay.focusStart, te) :
     phaseType === 'ending'        ? overlay.ending : 0.5;
@@ -342,21 +352,31 @@ export default function StoryPage({ storyConfig, onExploreMap }: Props) {
   const CARD_W = isMobile ? vw * layout.cardMobileFrac : Math.min(layout.cardMaxPx, vw * layout.cardFraction);
   const STAT_W = isMobile ? vw * layout.statMobileFrac : vw * layout.statFraction;
 
-  const cardLeft = !isMobile && isStat
+  const cardLeft = !isMobile && (isStat || isImage)
     ? (vw / 2 - CARD_W) / 2
     : (vw - CARD_W) / 2;
 
   const statLeft    = vw * layout.statPanelLeftFrac + layout.statPanelGapPx;
-  const statVisible = isStat && !isMobile;
+  const statVisible = isStat  && !isMobile;
+  const imgVisible  = isImage && !isMobile;
 
   // ── Scroll-driven stat entrance / exit (desktop only) ──────────────────────
-  // Stats scroll upward as the user advances: each stat enters from below,
-  // holds in the centre of the phase, then exits upward into the next.
   const { statAnim } = SCROLL_CONFIG;
   const statEntranceT  = isStat ? easeInOut(Math.min(1, t / statAnim.enterZone)) : 0;
   const statExitT      = isStat ? easeInOut(Math.max(0, (t - statAnim.exitZone) / (1 - statAnim.exitZone))) : 0;
   const statTranslateY = lerp(statAnim.enterOffsetPx, 0, statEntranceT) + lerp(0, -statAnim.exitOffsetPx, statExitT);
   const statOpacity    = isStat ? statEntranceT * (1 - statExitT) : 0;
+
+  // ── Scroll-driven image entrance / exit (same rhythm as stats) ──────────────
+  const imgEntranceT  = isImage ? easeInOut(Math.min(1, t / statAnim.enterZone)) : 0;
+  const imgExitT      = isImage ? easeInOut(Math.max(0, (t - statAnim.exitZone) / (1 - statAnim.exitZone))) : 0;
+  const imgTranslateY = lerp(statAnim.enterOffsetPx, 0, imgEntranceT) + lerp(0, -statAnim.exitOffsetPx, imgExitT);
+  const imgOpacity    = isImage ? imgEntranceT * (1 - imgExitT) : 0;
+
+  const currentImage     = phase.type === 'node-image'
+    ? (storyConfig.nodeContent[phase.nodeId]?.images?.[phase.imageIndex] ?? null)
+    : null;
+  const currentNodeImages = cameraNodeId ? (storyConfig.nodeContent[cameraNodeId]?.images ?? []) : [];
 
   return (
     <div style={{ height: totalHeight }} className="relative bg-neutral-950">
@@ -530,6 +550,47 @@ export default function StoryPage({ storyConfig, onExploreMap }: Props) {
             </div>
           </div>
 
+          {/* Image panel — scroll-driven vertical entrance/exit (desktop only) */}
+          {!isMobile && (
+            <div
+              className="absolute top-0 bottom-0 flex flex-col justify-center py-20 px-6 overflow-y-auto"
+              style={{
+                width: STAT_W,
+                left: statLeft,
+                opacity: imgOpacity,
+                transform: `translateY(${imgTranslateY}px)`,
+                pointerEvents: imgVisible ? 'auto' : 'none',
+              }}
+            >
+              {currentImage && (
+                <div className="space-y-4">
+                  <p className="text-xs font-bold uppercase tracking-widest text-neutral-500">Story Image</p>
+                  <div className="bg-neutral-800/60 border border-neutral-700/80 rounded-2xl overflow-hidden">
+                    <img
+                      src={currentImage.src}
+                      alt={currentImage.alt ?? ''}
+                      className="w-full object-cover"
+                    />
+                    {currentImage.caption && (
+                      <p className="px-4 py-3 text-xs text-neutral-500 italic leading-relaxed border-t border-neutral-700/50">
+                        {currentImage.caption}
+                      </p>
+                    )}
+                  </div>
+                  {currentNodeImages.length > 1 && (
+                    <div className="flex gap-2 justify-center">
+                      {currentNodeImages.map((_, i) => (
+                        <div key={i} className={`w-1.5 h-1.5 rounded-full transition-colors duration-300 ${
+                          i === currentImageIndex ? 'bg-neutral-300' : 'bg-neutral-600'
+                        }`} />
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+
           {/* Stat panel — scroll-driven vertical entrance/exit (desktop only) */}
           {!isMobile && (
             <div
@@ -571,6 +632,29 @@ export default function StoryPage({ storyConfig, onExploreMap }: Props) {
                         }`} />
                       ))}
                     </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Mobile image panel — stacked below story */}
+          {isMobile && isImage && (
+            <div
+              className="absolute left-0 right-0 flex flex-col px-5 pb-4 overflow-y-auto"
+              style={{ top: '52%', bottom: 0, pointerEvents: 'auto' }}
+            >
+              {currentImage && (
+                <div className="bg-neutral-800/60 border border-neutral-700/80 rounded-2xl overflow-hidden">
+                  <img
+                    src={currentImage.src}
+                    alt={currentImage.alt ?? ''}
+                    className="w-full object-cover"
+                  />
+                  {currentImage.caption && (
+                    <p className="px-4 py-3 text-xs text-neutral-500 italic leading-relaxed border-t border-neutral-700/50">
+                      {currentImage.caption}
+                    </p>
                   )}
                 </div>
               )}

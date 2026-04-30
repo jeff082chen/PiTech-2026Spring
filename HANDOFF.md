@@ -50,6 +50,9 @@ The `VITE_BASE_URL` env var is read by `vite.config.ts` and sets the asset base 
 ## 2. Project structure
 
 ```
+public/
+└── story-images/                  ← DROP image files here; reference as /story-images/filename.jpg
+
 src/
 ├── App.tsx                        Top-level view router — 'story' | 'map' | 'builder' | 'graph-editor'
 ├── main.tsx                       React entry point
@@ -171,20 +174,28 @@ type Phase = {
 } & (
   | { type: 'hero' }
   | { type: 'overview' }
-  | { type: 'node-focus'; nodeId: string }
-  | { type: 'node-story'; nodeId: string }
-  | { type: 'node-stat';  nodeId: string; statIndex: number }
+  | { type: 'node-move';     nodeId: string }
+  | { type: 'node-zoom-in';  nodeId: string }
+  | { type: 'node-story';    nodeId: string }
+  | { type: 'node-image';    nodeId: string; imageIndex: number }
+  | { type: 'node-stat';     nodeId: string; statIndex: number }
+  | { type: 'node-zoom-out'; nodeId: string }
   | { type: 'ending' }
 )
 ```
 
-**Phase sequence for a node with 2 statistics:**
+**Phase sequence for a node with 1 story image and 2 statistics:**
 ```
-node-focus  → camera zooms from previous position to this node
-node-story  → camera stays on node; story card appears
-node-stat   → camera stays; story card slides left; stat 0 appears (scroll-driven)
-node-stat   → camera stays; stat 1 appears (scroll-driven)
+node-move     → camera pans from previous node to this node
+node-zoom-in  → camera zooms in to fill-screen scale
+node-story    → story card appears (centered)
+node-image    → story card slides left; image panel appears on right (scroll-driven)
+node-stat     → stat 0 panel replaces image panel (scroll-driven)
+node-stat     → stat 1 panel (scroll-driven)
+node-zoom-out → camera zooms back out to normal scale
 ```
+
+Images and statistics are **independent right-panel slots**: images come from `story.json → nodeContent[id].images`, statistics come from `nodes.json → statisticIds → statistics.json`. A node can have any combination (images only, stats only, both, or neither).
 
 Phases are built once per `storyConfig` + `vh` (viewport height) and memoized. Phase heights are `phaseHeights[type] × vh` — so on a taller screen each phase uses more physical scroll distance, keeping the visual pace consistent.
 
@@ -212,7 +223,7 @@ Inside the sticky viewport, layers are stacked with `position: absolute`:
 | 3 | Hero screen | `phaseType === 'hero'` opacity |
 | 4 | Overview label | `phaseType === 'overview'` opacity |
 | 5 | Node-focus hint | `showFocusHint` (delayed via `setTimeout`) |
-| 6 | Story card + stat panel | `showContent` opacity wrapper |
+| 6 | Story card + image panel + stat panel | `showContent` opacity wrapper |
 | 7 | Ending screen | `phaseType === 'ending'` opacity |
 | 8 | Nav + progress bar | Always visible, `z-50` |
 
@@ -221,11 +232,11 @@ Inside the sticky viewport, layers are stacked with `position: absolute`:
 The story card has a fixed width (`min(540px, 46vw)` on desktop, `90vw` on mobile) — only its `left` position changes, preventing text reflow during transitions.
 
 ```
-node-story phase:  card centered  →  (vw − cardWidth) / 2
-node-stat phase:   card left      →  vw × 0.03  (CSS transition: cardSlide)
+node-story phase:         card centered  →  (vw − cardWidth) / 2
+node-image / node-stat:   card left      →  vw × 0.03  (CSS transition: cardSlide)
 ```
 
-The stat panel occupies the right half (`left: 50% + 16px`, `width: 44vw`).
+The image panel and stat panel share the same right-half position (`left: 50% + 16px`, `width: 44vw`). Only one is visible at a time — image phases precede stat phases.
 
 ### Stat panel animation (scroll-driven)
 
@@ -484,9 +495,16 @@ One file per character. **No JSX, no React imports** — fully JSON-serializable
         { "type": "text",    "title": "The Call", "body": "..." },
         { "type": "callout", "text": "..." },
         { "type": "quote",   "text": "...", "attribution": "Maria" }
+      ],
+      "images": [
+        {
+          "src":     "/story-images/my-photo.jpg",  // file in public/story-images/
+          "caption": "Optional caption",
+          "alt":     "Description for screen readers"
+        }
       ]
     }
-    // one entry per node in path[]
+    // one entry per node in path[]; images is optional
   },
 
   "ending": {
@@ -503,14 +521,26 @@ One file per character. **No JSX, no React imports** — fully JSON-serializable
 }
 ```
 
-**Content block types:**
+**Content block types (`blocks` array):**
 
 | Type | Required | Optional | Renders as |
 |------|----------|----------|------------|
 | `text` | `body` | `title` | Paragraph with optional bold heading |
 | `quote` | `text` | `attribution` | Italic pull-quote with red left border |
 | `callout` | `text` | — | Amber-bordered callout box |
-| `image` | `src` | `caption`, `alt` | Full-width image |
+| `image` | `src` | `caption`, `alt` | Full-width inline image |
+
+**Story images (`images` array):**
+
+Each entry in `images` creates a `node-image` scroll phase that shows the image in the right panel (same animation as stat panels), **before** any statistics for that node.
+
+| Field | Required | Description |
+|-------|----------|-------------|
+| `src` | ✅ | Path served from `public/` — e.g. `/story-images/photo.jpg` |
+| `caption` | — | Italic text shown below the image |
+| `alt` | — | Accessible description |
+
+Image files go in `public/story-images/`. The `public/` folder is served as-is by Vite — no build step needed to add new images. Editable in **Story Builder → Node Editor → Story Images**.
 
 ---
 
@@ -998,7 +1028,7 @@ Edits `story.json` (or any story config). Three-column layout:
 | Panel | Purpose |
 |-------|---------|
 | **Left — Path** | Ordered list of node IDs in the story. Drag to reorder; click to select. |
-| **Centre — Node Editor** | Story blocks for the selected node: add/edit/reorder `text`, `quote`, `callout`, `image` blocks. |
+| **Centre — Node Editor** | Story blocks + story images for the selected node. Blocks: add/edit/reorder `text`, `quote`, `callout`. Images: add/remove/reorder; enter the `/story-images/…` path and preview renders live. |
 | **Right — Stats Library** | Browse all statistics for the selected node; click to insert a stat reference block. |
 
 **Top toolbar:**
@@ -1073,9 +1103,12 @@ Replace `src/data/config/nodes.json` and `src/data/config/statistics.json` with 
 
 ### Edit story text for an existing node
 
-Open `src/data/stories/story.json`. Find the `nodeContent[nodeId]` entry and edit the `blocks` array.
+Open `src/data/stories/story.json`. Find the `nodeContent[nodeId]` entry and edit `blocks` or `images`.
 
-Supported block types: `text`, `quote`, `callout`, `image` — see §5 Layer 3 for field reference.
+- **`blocks`** — text content: `text`, `quote`, `callout`, `image` (see §5 Layer 3)
+- **`images`** — right-panel story images shown before statistics; files go in `public/story-images/`
+
+Or use the **Story Builder** (triple-click the site title) and select the node — the Node Editor panel has both a block list and an **Images** section at the bottom.
 
 ### Add a new character story
 

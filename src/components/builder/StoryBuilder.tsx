@@ -58,7 +58,7 @@ export default function StoryBuilder({ onExit, onOpenGraphEditor }: Props) {
         ...prev,
         nodeContent: {
           ...prev.nodeContent,
-          [selectedNodeId]: { blocks: [...existing.blocks, block] },
+          [selectedNodeId]: { ...existing, blocks: [...existing.blocks, block] },
         },
       };
     });

@@ -356,9 +356,11 @@ Each item in `actions` renders as a call-to-action bullet at the end of the stor
 
 These can be edited in the **Story Builder** under "Ending Screen → Get Involved — CTA items".
 
-#### `nodeContent` — story text per node
+#### `nodeContent` — story text and images per node
 
-Each key in `nodeContent` must match a node ID in `path[]`. The value is an object with a `blocks` array. Each block has a `type` that controls how it renders:
+Each key in `nodeContent` must match a node ID in `path[]`. The value has two arrays:
+
+**`blocks`** — text content blocks, each with a `type`:
 
 | type | Required fields | Optional fields | Renders as |
 |------|----------------|-----------------|------------|
@@ -366,6 +368,28 @@ Each key in `nodeContent` must match a node ID in `path[]`. The value is an obje
 | `quote` | `text` | `attribution` | Italic blockquote with red left border |
 | `callout` | `text` | — | Amber-bordered callout box |
 | `image` | `src` | `caption`, `alt` | Full-width image with caption |
+
+**`images`** — story images shown in the right panel during scrolling, **before** the statistics for that node:
+
+```jsonc
+"images": [
+  {
+    "src":     "/story-images/my-photo.jpg",  // path relative to public/
+    "caption": "Optional caption shown below the image",
+    "alt":     "Description for screen readers"
+  }
+]
+```
+
+| field | Required | Description |
+|-------|----------|-------------|
+| `src` | ✅ | Path to image in `public/`. Use `/story-images/filename.jpg`. |
+| `caption` | — | Shown in italic below the image |
+| `alt` | — | Alt text for accessibility |
+
+**Adding an image file:** place it in `public/story-images/` and reference it as `/story-images/filename.jpg`. No build step needed — Vite serves the `public/` folder as-is.
+
+These can be added and edited in the **Story Builder** → select a node → scroll down to the **Story Images** section.
 
 **Example:**
 
